@@ -213,15 +213,67 @@ Not in MVP: reasoning timeline, news feed, pattern view, compare view, live tape
 
 ---
 
-## 9. Open questions for the operator
+## 9. Operator decisions (locked in)
 
-Before we start coding the UI, pick one from each:
+| Question              | Decision                                |
+|-----------------------|-----------------------------------------|
+| Hosting               | **Firebase Hosting**                    |
+| Access                | **Private to operator** (Firebase Auth, single account) |
+| Framework             | **Next.js** (App Router)                |
+| Charting              | **Recharts**                            |
 
-1. **Host:** Cloudflare Pages (my default — fastest + free + good for static sites) or Vercel?
-2. **Domain:** subdomain of something you own, or use the `.vercel.app` / `.pages.dev` free subdomain?
-3. **Public or gated:** is the dashboard just for you, or do you want to share it? MVP = just you, no auth. V3 = auth.
-4. **Next.js or Astro:** Next.js has more ecosystem and works for V3 auth easily. Astro is simpler for a static dashboard. I'd default to Next.js.
-5. **Charting library:** Recharts (simple, React-native feel) or `lightweight-charts` (TradingView's lib, looks pro). I'd default to Recharts for MVP, upgrade to lightweight-charts if we care about candle charts.
+### Why Firebase Hosting works well with this stack
+
+- **Auth is included.** Firebase Auth handles the "private to me" requirement natively — email + password or Google sign-in, no second vendor needed. Saves vs Clerk/Auth0 setup.
+- **Next.js is officially supported** via Firebase's web-frameworks integration (`firebase experiments:enable webframeworks`). Under the hood, dynamic pages land on Cloud Run, static pages on the CDN. We don't have to care — we just write Next.
+- **Secret management** (Firebase Secret Manager) is in the same project, so if we eventually move Alpaca keys server-side (before live trading), we don't add a new vendor.
+- **Generous free tier** for a single-user dashboard.
+
+### Pre-requisite (operator does this before UI-1 starts)
+
+1. Go to `console.firebase.google.com` → sign in with Google → **Add project** → name it `trader-dashboard` (or similar) → disable Analytics (not needed) → Create.
+2. In the project → **Build → Hosting → Get started**.
+3. In the project → **Build → Authentication → Get started → Email/Password** provider → enable.
+4. Tell me the project ID when ready — I'll need it for `firebase.json`.
+
+No secrets to collect here; everything Firebase-side is set up once and forgotten.
+
+### What UI-1 (MVP) will ship
+
+Given the locked stack:
+
+```
+ui/
+├── package.json                      ← Next.js 15, React 19, Tailwind, Recharts, Firebase SDK
+├── next.config.js
+├── firebase.json                     ← Hosting + Auth config
+├── .firebaserc                       ← project ID
+├── app/
+│   ├── layout.tsx                    ← auth guard (redirects to /login if unauthed)
+│   ├── page.tsx                      ← dashboard: 3 bot cards + sparklines
+│   ├── login/page.tsx                ← Firebase Auth email/password
+│   └── [bot]/page.tsx                ← per-bot detail: Overview, Positions, Trades tabs
+├── components/
+│   ├── BotCard.tsx
+│   ├── EquityCurve.tsx               ← Recharts
+│   ├── PositionsTable.tsx
+│   ├── TradesTable.tsx
+│   ├── Sparkline.tsx                 ← Recharts
+│   └── RoutineHealthStrip.tsx
+├── lib/
+│   ├── firebase.ts                   ← Firebase client init
+│   ├── alpaca.ts                     ← browser-side Alpaca REST client (3 accounts)
+│   ├── github.ts                     ← raw-file fetcher for the bot memory
+│   └── parsers/
+│       ├── trade-log.ts              ← parse trade-log.md tables
+│       ├── benchmark.ts              ← parse benchmark.md rows
+│       └── reasoning.ts              ← parse reasoning.md dated blocks
+└── public/favicon.ico
+```
+
+### Not in UI-1 (roadmap in §4.x remains)
+
+Reasoning timeline, news feed, pattern view, compare view, live tape, alerts, mobile push notifications. All in v2+.
 
 ---
 
