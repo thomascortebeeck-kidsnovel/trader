@@ -15,24 +15,30 @@ You can later merge to `main`. Routines can be pointed at any branch, but `main`
 
 ## 2. Get your API keys
 
-- **Alpaca paper:** alpaca.markets → sign up → Trading API → copy key + secret. Endpoint stays `https://paper-api.alpaca.markets`.
-- **Perplexity:** perplexity.ai → settings → API → generate key.
-- **Finnhub:** finnhub.io → register → dashboard → API key.
-- **ClickUp:** clickup.com → settings → Apps → API token. Get a task ID by opening any task and copying the digits/letters at the end of the URL (or use the format `86xxxxx`). Recommend one ClickUp task per bot for clean notification threading.
+- **Alpaca paper (x3):** alpaca.markets → sign up → Trading API → copy key + secret. Do this **three times**, once per bot, so each bot has its own paper account and its own P/L. You can use the same email with aliases (e.g. `you+general@gmail.com`, `you+kraken@gmail.com`, `you+news@gmail.com`) if the provider allows. Paper accounts are free and unlimited. Endpoint stays `https://paper-api.alpaca.markets`.
+- **Perplexity:** perplexity.ai → settings → API → generate key. One key, shared by all three bots.
+- **Finnhub:** finnhub.io → register → dashboard → API key. One key, shared.
+- **ClickUp:** clickup.com → settings → Apps → API token. **One task** shared by all three bots — messages are prefixed with `[GENERAL]` / `[KRAKEN]` / `[NEWS]` so the thread stays readable. Get the task ID by opening the task and copying the last segment of the URL (format: `86xxxxx`).
 
 ## 3. Create three Claude Code routine environments
 
 In claude.ai/code/routines → Cloud environments → New environment. Make three:
 
-| Environment name      | Env vars to set                                                                                              |
-|-----------------------|--------------------------------------------------------------------------------------------------------------|
-| `general`             | `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_BASE_URL=https://paper-api.alpaca.markets`, `PERPLEXITY_API_KEY`, `FINNHUB_API_KEY`, `CLICKUP_API_KEY`, `CLICKUP_TASK_ID` |
-| `day-trader-kraken`   | same as `general`                                                                                            |
-| `news-based`          | same as `general`                                                                                            |
+| Environment         | Unique vars (per-bot Alpaca keys)                                      | Shared vars                                                                                                |
+|---------------------|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `general`           | `ALPACA_API_KEY` + `ALPACA_SECRET_KEY` = Bot-1's paper account         | `ALPACA_BASE_URL=https://paper-api.alpaca.markets`, `PERPLEXITY_API_KEY`, `FINNHUB_API_KEY`, `CLICKUP_API_KEY`, `CLICKUP_TASK_ID` |
+| `day-trader-kraken` | `ALPACA_API_KEY` + `ALPACA_SECRET_KEY` = Bot-2's paper account         | same as above                                                                                              |
+| `news-based`        | `ALPACA_API_KEY` + `ALPACA_SECRET_KEY` = Bot-3's paper account         | same as above                                                                                              |
 
-If you want per-bot Alpaca paper accounts (recommended for clean P/L attribution), generate three Alpaca paper accounts and use one set of keys per environment.
+Give each environment full network access (Alpaca trading + data, Finnhub, Perplexity, ClickUp endpoints all need it).
 
-Give each environment full network access (Alpaca, Finnhub, Perplexity, ClickUp endpoints all need it).
+**Sanity-check each environment first** before wiring routines. With the environment active and keys set, run:
+
+```
+python scripts/bootstrap.py
+```
+
+It hits every API once and fails loud on any missing key. If all four sections print "OK", the environment is ready.
 
 ## 4. Create the routines
 

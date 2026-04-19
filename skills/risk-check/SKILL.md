@@ -22,6 +22,19 @@
 
 `{ok: true}` or `{ok: false, reason: "..."}`.
 
+## How to invoke
+
+Prefer `scripts/risk_check.py` — it enforces the numeric checks in code (checks 1, 2, 3, 4, 6 above) by shelling out to Alpaca. Example:
+
+```
+python scripts/risk_check.py \
+    --bot general --symbol AAPL --side buy --qty 25 --price 192.50 \
+    --max-position-pct 0.05 --daily-loss-cap -0.02 --max-open-positions 12 \
+    --min-adv-dollars 50000000
+```
+
+Exit 0 = allowed. Exit 1 with JSON reason on stdout = blocked. The earnings check, PDT check, and cooldown check (5, 7, 8) remain agent responsibilities — they require context the routine already has (the pre-market block, the trade log, the clock).
+
 ## Why this exists
 
 The agent is eager. Without an explicit gate, it talks itself into trades. This skill is the gate. It is dumb on purpose — boolean checks against numeric thresholds, no judgement.

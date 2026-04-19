@@ -11,7 +11,14 @@
 
 ### 1. Dedupe
 
-Hash `url` (or `headline + source` if URL missing). Drop any hash already in `seen-headlines.md`. Append new hashes once processed.
+Use `scripts/news_filter.py dedupe` — it takes Alpaca news JSON on stdin, hashes each item by URL (or headline+source fallback), drops anything already in `seen-headlines.md`, appends new hashes to that file, and prints only the new items.
+
+```
+python scripts/alpaca.py news AAPL,MSFT 30 \
+    | python scripts/news_filter.py dedupe --seen bots/news-based/memory/seen-headlines.md
+```
+
+Output: `{"new": [...], "count": N}` with each item's hash attached as `_hash`.
 
 ### 2. Score importance 1–5
 

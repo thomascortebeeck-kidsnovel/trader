@@ -45,7 +45,10 @@ trader/
 │   ├── perplexity.py                ← single-question synthesis
 │   ├── finnhub.py                   ← company-news + general-news
 │   ├── clickup.py                   ← post comment on a task
-│   └── notify.py                    ← thin dispatcher (currently → clickup.py)
+│   ├── notify.py                    ← thin dispatcher (currently → clickup.py)
+│   ├── bootstrap.py                 ← one-shot: hit every API, fail loud on misconfig
+│   ├── risk_check.py                ← deterministic guardrail; used by the trade skill
+│   └── news_filter.py               ← hash + dedupe for news items
 │
 ├── skills/                          ← reusable agent capabilities (one folder per skill)
 │   ├── research/                    ← web/news synthesis → watchlist
@@ -275,11 +278,19 @@ Full step-by-step in `docs/routine-setup-guide.md`.
 
 ---
 
-## 8. Open questions for the operator
+## 8. Operator decisions (locked in)
 
-These are decisions worth pausing on before flipping anything live:
+These are the calls the operator has made. They supersede the "recommendations" elsewhere in this file.
 
-1. **One Alpaca paper account or three?** Three is cleaner (per-bot P&L is unambiguous) but requires three Alpaca sign-ups. One shared account is simpler but blends performance attribution. Recommend **three**.
-2. **ClickUp task per bot, or one task with three threads?** One-per-bot makes notification noise easier to mute selectively.
-3. **Day trader: KRKNF (US OTC) or wait for a Questrade/IBKR integration to trade KRKN on TSX?** OTC liquidity is the tradeoff against more setup.
-4. **News bot: how aggressive on macro?** Macro trades through sector ETFs are slower-moving; the bot will sometimes sit on its hands for days. Is that OK?
+1. **Three Alpaca paper accounts.** One per bot. Each bot's routine environment gets its own `ALPACA_API_KEY` / `ALPACA_SECRET_KEY`. This keeps P/L attribution clean — bot 1's wins aren't masked by bot 2's losses. `env.template` documents the shape. Per-bot account sign-ups happen at alpaca.markets (paper accounts are free and unlimited).
+
+2. **One ClickUp task, shared by all three bots.** Messages are prefixed with `[GENERAL]`, `[KRAKEN]`, `[NEWS]` so the single thread stays readable. Simpler setup, one env var pair (`CLICKUP_API_KEY`, `CLICKUP_TASK_ID`) shared across all environments.
+
+3. **Day trader starts on KRKNF (US OTC) via Alpaca.** No Questrade / IBKR build for phase 1. The liquidity research in `bots/day-trader-kraken/pattern-research.md` (April 2026 pass) confirms KRKNF's actual avg-daily-volume is ~1.0–1.2M shares with ~$6–8M daily dollar-volume — *substantially* more liquid than the conservative priors in the first scaffold. We can swap in a Canadian broker later without touching strategy logic; `scripts/alpaca.py` is the only file that changes.
+
+4. **News bot macro aggressiveness:** default sizing (3% per thesis, max 2 concurrent) stands. Revisit at the first weekly-review.
+
+## 9. Still open
+
+- **Real-money graduation criteria** — documented per-bot in each `strategy.md`, but the operator has final sign-off. No bot flips live without explicit approval in `memory/weekly-review.md`.
+- **When to add a 4th bot** — if this works, a crypto or options bot could slot in under `bots/`. Not for phase 1.
