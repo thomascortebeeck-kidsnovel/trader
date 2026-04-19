@@ -81,7 +81,12 @@ export default function Dashboard() {
       </header>
 
       {BOT_SLUGS.map((slug) => (
-        <BotCard key={slug} bot={BOTS[slug]} state={state[slug]} />
+        <BotCard
+          key={slug}
+          bot={BOTS[slug]}
+          state={state[slug]}
+          spyHistory={state['general']?.history}
+        />
       ))}
 
       <RoutineHealthStrip state={state} />

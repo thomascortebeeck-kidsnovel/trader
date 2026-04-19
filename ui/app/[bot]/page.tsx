@@ -20,23 +20,30 @@ export default function BotDetail({ params }: { params: Promise<{ bot: string }>
   const [tab, setTab] = useState<Tab>('overview');
   const [account, setAccount] = useState<AlpacaAccount | null>(null);
   const [history, setHistory] = useState<BenchmarkRow[]>([]);
+  const [spyHistory, setSpyHistory] = useState<BenchmarkRow[]>([]);
   const [positions, setPositions] = useState<AlpacaPosition[]>([]);
   const [trades, setTrades] = useState<TradeRow[]>([]);
+
+  const needsSpyOverlay = bot.benchmark !== 'SPY';
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const [a, h, p, t] = await Promise.all([
+      const [a, h, p, t, spy] = await Promise.all([
         authFetch(`/api/alpaca/${slug}/account`).then((r) => (r.ok ? r.json() : null)),
         authFetch(`/api/memory/${slug}/benchmark.md`).then((r) => (r.ok ? r.json() : [])),
         authFetch(`/api/alpaca/${slug}/positions`).then((r) => (r.ok ? r.json() : [])),
         authFetch(`/api/memory/${slug}/trade-log.md`).then((r) => (r.ok ? r.json() : [])),
+        needsSpyOverlay
+          ? authFetch(`/api/memory/general/benchmark.md`).then((r) => (r.ok ? r.json() : []))
+          : Promise.resolve([]),
       ]);
       if (cancelled) return;
       setAccount(a);
       setHistory(h);
       setPositions(p);
       setTrades(t);
+      setSpyHistory(spy);
     }
     load();
     const id = setInterval(load, 60_000);
@@ -44,7 +51,7 @@ export default function BotDetail({ params }: { params: Promise<{ bot: string }>
       cancelled = true;
       clearInterval(id);
     };
-  }, [slug]);
+  }, [slug, needsSpyOverlay]);
 
   const eq = account?.equity ?? 0;
   const lastEq = account?.last_equity ?? 0;
@@ -89,8 +96,16 @@ export default function BotDetail({ params }: { params: Promise<{ bot: string }>
 
       {tab === 'overview' && (
         <section className="panel p-3">
-          <div className="stat-label mb-2">Equity vs {bot.benchmarkLabel} — last {history.length} days</div>
-          <EquityCurve rows={history} height={280} />
+          <div className="stat-label mb-2">
+            Equity vs {bot.benchmarkLabel}
+            {needsSpyOverlay ? ' & SPY' : ''} — last {history.length} days
+          </div>
+          <EquityCurve
+            rows={history}
+            benchmarkLabel={bot.benchmarkLabel}
+            spyRows={needsSpyOverlay ? spyHistory : null}
+            height={280}
+          />
         </section>
       )}
 

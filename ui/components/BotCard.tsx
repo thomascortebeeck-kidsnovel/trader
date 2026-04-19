@@ -14,6 +14,7 @@ interface Props {
         routines: RoutineRun[];
       }
     | undefined;
+  spyHistory?: BenchmarkRow[];
 }
 
 function formatRelative(iso: string | undefined): string {
@@ -27,7 +28,7 @@ function formatRelative(iso: string | undefined): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
-export function BotCard({ bot, state }: Props) {
+export function BotCard({ bot, state, spyHistory }: Props) {
   const eq = state?.account?.equity ?? 0;
   const last = state?.account?.last_equity ?? 0;
   const todayPct = last > 0 ? ((eq - last) / last) * 100 : 0;
@@ -45,6 +46,13 @@ export function BotCard({ bot, state }: Props) {
       : 0;
   const vsBench = botCumPct - benchCumPct;
 
+  const spyRows = spyHistory ?? [];
+  const showSpyStat = bot.benchmark !== 'SPY' && spyRows.length > 0;
+  const spyStart = showSpyStat ? spyRows[0].benchClose : 0;
+  const spyEnd = showSpyStat ? spyRows[spyRows.length - 1].benchClose : 0;
+  const spyCumPct = spyStart > 0 ? ((spyEnd - spyStart) / spyStart) * 100 : 0;
+  const vsSpy = botCumPct - spyCumPct;
+
   const latestRoutine = state?.routines?.[0];
 
   return (
@@ -55,7 +63,7 @@ export function BotCard({ bot, state }: Props) {
           ${eq.toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </div>
       </div>
-      <div className="flex gap-4 mt-1 text-xs">
+      <div className="flex gap-4 mt-1 text-xs flex-wrap">
         <span className={`num ${todayPct >= 0 ? 'text-up' : 'text-down'}`}>
           {todayPct >= 0 ? '+' : ''}
           {todayPct.toFixed(2)}% today
@@ -64,6 +72,12 @@ export function BotCard({ bot, state }: Props) {
           {vsBench >= 0 ? '+' : ''}
           {vsBench.toFixed(2)}% vs {bot.benchmarkLabel}
         </span>
+        {showSpyStat && (
+          <span className={`num ${vsSpy >= 0 ? 'text-up' : 'text-down'}`}>
+            {vsSpy >= 0 ? '+' : ''}
+            {vsSpy.toFixed(2)}% vs SPY
+          </span>
+        )}
       </div>
       <div className="mt-3">
         <Sparkline values={series} />
