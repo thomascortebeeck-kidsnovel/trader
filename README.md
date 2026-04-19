@@ -14,7 +14,11 @@ A Claude Code repository hosting **three autonomous trading bots**, each driven 
 
 ## Setup
 
-**→ Use [`docs/SETUP.md`](./docs/SETUP.md)** — a single mobile-friendly page with every field you need to copy-paste into claude.ai/code/routines: 3 environment blocks, 16 routine rows, validation checklist, and a phased enable plan.
+**→ Mobile / first-time:** [`docs/MOBILE-WALKTHROUGH.md`](./docs/MOBILE-WALKTHROUGH.md) — hand-holding for the first environment + first routine, then pattern-matching for the rest.
+
+**→ Full paste-helper:** [`docs/SETUP.md`](./docs/SETUP.md) — every field pre-filled for all 3 environments and 16 routines.
+
+**→ Dashboard UI roadmap:** [`docs/UI-PLAN.md`](./docs/UI-PLAN.md) — phased plan for a read-only mobile dashboard (ships after week 1 of bot operation).
 
 ## Quick start
 
