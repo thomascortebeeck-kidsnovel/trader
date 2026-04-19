@@ -12,6 +12,10 @@ A Claude Code repository hosting **three autonomous trading bots**, each driven 
 | [`bots/day-trader-kraken`](./bots/day-trader-kraken) | Single-name intraday, ORB + VWAP + ABCD                  | Kraken Robotics (KRKNF on US OTC, KRKN on TSX) |
 | [`bots/news-based`](./bots/news-based)         | Headline-driven micro (per-ticker) + macro (sector ETFs)         | Watchlist tickers + sector ETFs           |
 
+## Setup
+
+**→ Use [`docs/SETUP.md`](./docs/SETUP.md)** — a single mobile-friendly page with every field you need to copy-paste into claude.ai/code/routines: 3 environment blocks, 16 routine rows, validation checklist, and a phased enable plan.
+
 ## Quick start
 
 ```bash
