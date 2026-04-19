@@ -1,6 +1,6 @@
 # Routine: general / market-open
 
-**Cron (CT):** `30 8 * * 1-5`
+**Cron (ET):** `0 10 * * 1-5`  (10:00 America/New_York; 30 min after the open so the first 5-min bar has settled)
 **Environment:** `general`
 
 ---

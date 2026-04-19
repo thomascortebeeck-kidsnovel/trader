@@ -12,13 +12,15 @@ See [`strategy.md`](./strategy.md) for the rulebook the agent loads on every rou
 
 ## Routines
 
-| File                              | Cron (CT)         | Purpose                             |
-|-----------------------------------|-------------------|-------------------------------------|
-| `routines/pre-market.md`          | `0 7 * * 1-5`     | Research catalysts, draft ideas     |
-| `routines/market-open.md`         | `30 8 * * 1-5`    | Execute, set trailing stops         |
-| `routines/midday.md`              | `0 11 * * 1-5`    | Cut losers, tighten winners         |
-| `routines/eod.md`                 | `0 15 * * 1-5`    | Snapshot + benchmark + report       |
-| `routines/weekly-review.md`       | `30 15 * * 5`     | Grade week, update strategy         |
+All times are **America/New_York** (Eastern Time). Belgium operator: ET = Brussels − 6h.
+
+| File                              | Cron (ET)         | Brussels equivalent | Purpose                             |
+|-----------------------------------|-------------------|---------------------|-------------------------------------|
+| `routines/pre-market.md`          | `0 8 * * 1-5`     | 14:00               | Research catalysts, draft ideas     |
+| `routines/market-open.md`         | `0 10 * * 1-5`    | 16:00               | Execute, set trailing stops         |
+| `routines/midday.md`              | `0 12 * * 1-5`    | 18:00               | Cut losers, tighten winners         |
+| `routines/eod.md`                 | `0 16 * * 1-5`    | 22:00               | Snapshot + benchmark + report       |
+| `routines/weekly-review.md`       | `30 16 * * 5`     | 22:30 Fri           | Grade week, update strategy         |
 
 ## Memory
 

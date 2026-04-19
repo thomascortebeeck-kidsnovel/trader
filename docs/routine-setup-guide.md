@@ -42,15 +42,17 @@ It hits every API once and fails loud on any missing key. If all four sections p
 
 ## 4. Create the routines
 
+> **Heads-up: env vars don't live on the routine page.** They live on the **Cloud Environment** (step 3 above). The routine just *picks* an environment from a dropdown. If you're on the routine creation screen looking for an env-var field, you won't find one — go back to **Environments** in the sidebar to set them.
+
 For each `.md` file under `bots/<bot>/routines/`, create one remote routine in claude.ai/code/routines:
 
 1. **New routine** → Remote.
 2. **Repo:** point at this GitHub repo.
 3. **Branch:** `main` (or `claude/ai-trading-bot-system-magkk` for testing).
-4. **Environment:** the matching one from step 3.
+4. **Environment:** the matching one from step 3 (this is where your env vars are inherited from).
 5. **Model:** `claude-opus-4-7` (1M context).
 6. **Prompt:** paste the entire contents of the routine `.md` file.
-7. **Cron:** copy the cron expression from the top of the same file.
+7. **Cron:** copy the cron expression from the top of the same file. **All times are in America/New_York (ET).** If the routine UI asks for a timezone, pick `America/New_York`. Brussels equivalents are listed in each bot's README for sanity-checking.
 8. **Permissions → Allow unrestricted branch pushes:** ON. Routines need to push memory updates back to `main`.
 9. Save.
 

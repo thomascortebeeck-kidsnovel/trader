@@ -20,13 +20,16 @@ For real money, the operator should evaluate Questrade or IBKR to trade `KRKN` o
 
 ## Routines
 
-| File                              | Cron (ET)         | Purpose                                                  |
-|-----------------------------------|-------------------|----------------------------------------------------------|
-| `routines/pre-market.md`          | `15 8 * * 1-5`    | Gap, levels, news, go/no-go for the session              |
-| `routines/opening-range.md`       | `45 9 * * 1-5`    | After 15-min ORB forms: trade ORH/ORL break w/ volume    |
-| `routines/trend-scan-1.md`        | `30 10 * * 1-5`   | Manage open trade; continuation patterns                 |
-| `routines/trend-scan-2.md`        | `30 13 * * 1-5`   | Afternoon reversal scan                                  |
-| `routines/close-flatten.md`       | `50 15 * * 1-5`   | Force-flatten any open position by 3:55 PM ET            |
-| `routines/weekly-review.md`       | `30 16 * * 5`     | Re-run pattern analysis; compute win-rate / R / expectancy |
+All times are **America/New_York** (Eastern Time). Belgium operator: ET = Brussels − 6h.
+Benchmark for performance: **`ITA`** (iShares US Aerospace & Defense — closest single-ETF proxy).
+
+| File                              | Cron (ET)         | Brussels | Purpose                                                  |
+|-----------------------------------|-------------------|----------|----------------------------------------------------------|
+| `routines/pre-market.md`          | `15 8 * * 1-5`    | 14:15    | Gap, levels, news, go/no-go for the session              |
+| `routines/opening-range.md`       | `45 9 * * 1-5`    | 15:45    | After 15-min ORB forms: trade ORH/ORL break w/ volume    |
+| `routines/trend-scan-1.md`        | `30 10 * * 1-5`   | 16:30    | Manage open trade; continuation patterns                 |
+| `routines/trend-scan-2.md`        | `30 13 * * 1-5`   | 19:30    | Afternoon reversal scan                                  |
+| `routines/close-flatten.md`       | `50 15 * * 1-5`   | 21:50    | Force-flatten any open position by 3:55 PM ET            |
+| `routines/weekly-review.md`       | `30 16 * * 5`     | 22:30 Fri| Re-run pattern analysis; compute win-rate / R / expectancy |
 
 See [`docs/day-trading-research.md`](../../docs/day-trading-research.md) for the literature these rules are grounded in.

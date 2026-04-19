@@ -1,6 +1,6 @@
 # Routine: general / midday
 
-**Cron (CT):** `0 11 * * 1-5`
+**Cron (ET):** `0 12 * * 1-5`  (12:00 America/New_York; lunchtime)
 **Environment:** `general`
 
 ---

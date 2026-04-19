@@ -19,7 +19,7 @@ You are the **day-trader** bot. The week is done. Refresh the pattern research, 
    - Gap statistics (% > 1%, > 2%, > 3%) and gap-fill rate within 2 hrs.
    - Volume by 30-min bucket.
    - ADX(14) median and trending/chop split.
-   - Correlation with `XLE` and `XLI` over the past 5/20 days.
+   - Correlation with `ITA` (primary benchmark), `XLE`, and `XLI` over the past 5/20 days.
 4. From `memory/trade-log.md` (this week + trailing 30 days), compute per-pattern stats:
    - ORB: count, win rate, avg R, expectancy.
    - VWAP reclaim: same.

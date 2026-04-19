@@ -1,6 +1,6 @@
 # Routine: general / pre-market
 
-**Cron (CT):** `0 7 * * 1-5`
+**Cron (ET):** `0 8 * * 1-5`  (08:00 America/New_York; 1.5 hrs before the open)
 **Environment:** `general`
 **Repo:** this repo (push back to `main`)
 

@@ -4,7 +4,7 @@
 
 ## Inputs
 
-- Benchmark ticker (default `SPY` for general bot, `XLI` for day-trader, `SPY` for news bot).
+- Benchmark ticker (default `SPY` for general bot, **`ITA`** for day-trader-kraken — iShares US Aerospace & Defense, the closest single-ETF proxy for Kraken Robotics' defence + subsea exposure — and `SPY` for news bot).
 
 ## Steps
 

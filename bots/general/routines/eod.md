@@ -1,6 +1,6 @@
 # Routine: general / eod
 
-**Cron (CT):** `0 15 * * 1-5`
+**Cron (ET):** `0 16 * * 1-5`  (16:00 America/New_York; right at close)
 **Environment:** `general`
 
 ---

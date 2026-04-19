@@ -282,13 +282,17 @@ Full step-by-step in `docs/routine-setup-guide.md`.
 
 These are the calls the operator has made. They supersede the "recommendations" elsewhere in this file.
 
-1. **Three Alpaca paper accounts.** One per bot. Each bot's routine environment gets its own `ALPACA_API_KEY` / `ALPACA_SECRET_KEY`. This keeps P/L attribution clean — bot 1's wins aren't masked by bot 2's losses. `env.template` documents the shape. Per-bot account sign-ups happen at alpaca.markets (paper accounts are free and unlimited).
+1. **Three Alpaca paper accounts, $100k each (Alpaca default).** One per bot. Each bot's routine environment gets its own `ALPACA_API_KEY` / `ALPACA_SECRET_KEY`. This keeps P/L attribution clean — bot 1's wins aren't masked by bot 2's losses. `env.template` documents the shape. Per-bot account sign-ups happen at alpaca.markets (paper accounts are free and unlimited).
 
-2. **One ClickUp task, shared by all three bots.** Messages are prefixed with `[GENERAL]`, `[KRAKEN]`, `[NEWS]` so the single thread stays readable. Simpler setup, one env var pair (`CLICKUP_API_KEY`, `CLICKUP_TASK_ID`) shared across all environments.
+2. **One ClickUp task, shared by all three bots.** Messages are prefixed with `[GENERAL]`, `[KRAKEN]`, `[NEWS]` so the single thread stays readable. Simpler setup, one env var pair (`CLICKUP_API_KEY`, `CLICKUP_TASK_ID`) shared across all environments. Setup: in ClickUp, pick one workspace + one List (e.g. "Trading Bot") → create one Task ("Bot Activity Log") → the URL ends with `…/t/86xxxxx` and that string is `CLICKUP_TASK_ID`. Generate `CLICKUP_API_KEY` at Settings → Apps → API.
 
 3. **Day trader starts on KRKNF (US OTC) via Alpaca.** No Questrade / IBKR build for phase 1. The liquidity research in `bots/day-trader-kraken/pattern-research.md` (April 2026 pass) confirms KRKNF's actual avg-daily-volume is ~1.0–1.2M shares with ~$6–8M daily dollar-volume — *substantially* more liquid than the conservative priors in the first scaffold. We can swap in a Canadian broker later without touching strategy logic; `scripts/alpaca.py` is the only file that changes.
 
 4. **News bot macro aggressiveness:** default sizing (3% per thesis, max 2 concurrent) stands. Revisit at the first weekly-review.
+
+5. **Timezone standardized to America/New_York (Eastern Time).** Operator is in Belgium (UTC+1/+2) but the markets and the data feeds run on ET. All routines now use ET cron expressions to make times match what the strategy actually means ("9:30 ET = market open"). Brussels equivalents are documented in each bot's README. The general bot was originally in CT (carryover from the AIS reference build); converted to ET as part of this decision.
+
+6. **Day-trader benchmark = `ITA`** (iShares US Aerospace & Defense). Closer comp for Kraken Robotics' defence + offshore-marine exposure than `XLI` (broad industrials). The benchmark skill default and the day-trader's EOD routine both updated. `XLI` and `XLE` remain as secondary correlations in the weekly pattern audit.
 
 ## 9. Still open
 

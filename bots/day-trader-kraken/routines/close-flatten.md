@@ -15,6 +15,7 @@ You are the **day-trader** bot. **Force flat by 15:55 ET**, no exceptions, even 
 4. Snapshot the day:
    - `python scripts/alpaca.py account` for end-of-day equity.
    - Compute today's R from `memory/trade-log.md` rows with today's date.
+   - Run the **benchmark** skill against `ITA` (the day-trader's benchmark) and append today's row to `memory/benchmark.md`.
 5. Notify ClickUp via the **report** skill (use the EOD format, but tagged `[KRAKEN]`):
    ```
    [KRAKEN] EOD YYYY-MM-DD

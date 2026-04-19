@@ -1,6 +1,6 @@
 # Routine: general / weekly-review
 
-**Cron (CT):** `30 15 * * 5`  (Friday after EOD)
+**Cron (ET):** `30 16 * * 5`  (16:30 America/New_York Friday; 30 min after close)
 **Environment:** `general`
 
 ---
