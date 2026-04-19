@@ -9,6 +9,24 @@ For each routine below, you'll tap **+ New routine**, then copy the fields strai
 
 Do this once per bot. Three times total.
 
+### Fast path (optional): create the env shells via the Beta API
+
+If you have an `ANTHROPIC_API_KEY` handy, this script creates the three environment shells (name, description, network policy) in one shot — saves you ~30% of the per-env clicks. The API doesn't accept env vars or setup scripts in the create call, so you'll still finish those three details in the UI per env.
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+python3 scripts/create_environments.py
+# Rotate your ANTHROPIC_API_KEY after running.
+```
+
+It prints the new env IDs and writes them to `docs/.env-ids.txt`. Re-runs are safe — it skips envs whose name already exists.
+
+After it succeeds, jump straight to "Part 1 → for each env, open it in the UI and paste the env vars block + setup script" below. Skip the "Name" / "Network" / "Create environment" steps since the API already did them.
+
+### Manual path
+
+Tap **+ New environment** in claude.ai/code three times.
+
 ### Environment A — `general`
 
 - **Name:** `general`

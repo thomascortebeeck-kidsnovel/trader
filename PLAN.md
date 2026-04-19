@@ -48,7 +48,8 @@ trader/
 │   ├── notify.py                    ← thin dispatcher (currently → clickup.py)
 │   ├── bootstrap.py                 ← one-shot: hit every API, fail loud on misconfig
 │   ├── risk_check.py                ← deterministic guardrail; used by the trade skill
-│   └── news_filter.py               ← hash + dedupe for news items
+│   ├── news_filter.py               ← hash + dedupe for news items
+│   └── create_environments.py       ← Beta API: create the 3 env shells in one shot
 │
 ├── skills/                          ← reusable agent capabilities (one folder per skill)
 │   ├── research/                    ← web/news synthesis → watchlist
