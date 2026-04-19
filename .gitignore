@@ -2,6 +2,7 @@
 .env
 .env.*
 !env.template
+!ui/.env.example
 
 # Python
 __pycache__/
