@@ -23,6 +23,7 @@ export async function fetchMemoryFile(slug: BotSlug, file: string): Promise<stri
     headers: ghHeaders(),
     next: { revalidate: 60 },
   });
+  if (res.status === 404) return '';
   if (!res.ok) {
     throw new Error(`GitHub raw fetch ${url} failed: ${res.status}`);
   }
@@ -35,6 +36,7 @@ export async function fetchRoutineCommits(slug: BotSlug, limit = 20): Promise<Ro
     headers: ghHeaders(),
     next: { revalidate: 60 },
   });
+  if (res.status === 404 || res.status === 422) return [];
   if (!res.ok) {
     throw new Error(`GitHub commits fetch failed: ${res.status}`);
   }
