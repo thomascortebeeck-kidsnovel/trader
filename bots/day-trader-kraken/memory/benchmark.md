@@ -4,3 +4,4 @@ Append-only. EOD writes one row. Benchmark = `ITA` (iShares US Aerospace & Defen
 
 | date       | equity     | day_pl   | benchmark | bench_close | bot_vs_bench |
 |------------|------------|----------|-----------|-------------|--------------|
+| 2026-04-21 | 100000.00  | +0.00%   | ITA       | 223.665     | +3.49%       |
