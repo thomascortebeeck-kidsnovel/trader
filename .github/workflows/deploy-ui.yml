@@ -84,11 +84,65 @@ jobs:
         # entirely and configure runtime env directly on Cloud Run here.
         # Runs against the freshly-recreated service, so no phantom refs
         # exist and --set-secrets succeeds on the first call.
+        #
+        # We pre-verify every secret exists in Secret Manager. If one is
+        # missing, `gcloud run services update --set-secrets` accepts the
+        # spec but Cloud Run then fails to start the revision — traffic
+        # stays on the previous (empty-env) revision and the dashboard
+        # silently serves $0. Failing loud here surfaces the real problem.
         run: |
+          set -euo pipefail
+          PROJECT_ID=trader-dashboard-tc01
+
+          REQUIRED_SECRETS=(
+            GENERAL_ALPACA_API_KEY
+            GENERAL_ALPACA_SECRET_KEY
+            KRAKEN_ALPACA_API_KEY
+            KRAKEN_ALPACA_SECRET_KEY
+            NEWS_ALPACA_API_KEY
+            NEWS_ALPACA_SECRET_KEY
+            GITHUB_TOKEN
+          )
+
+          missing=()
+          for s in "${REQUIRED_SECRETS[@]}"; do
+            if ! gcloud secrets describe "$s" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+              missing+=("$s")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "ERROR: the following Secret Manager secrets do not exist in ${PROJECT_ID}:"
+            printf '  - %s\n' "${missing[@]}"
+            echo
+            echo "Create them first. Example:"
+            echo "  printf 'PKxxxx...' | gcloud secrets create GENERAL_ALPACA_API_KEY --project=${PROJECT_ID} --data-file=-"
+            echo
+            echo "Or, if they exist in another project, grant this project's Cloud Run"
+            echo "service account roles/secretmanager.secretAccessor on each secret."
+            exit 1
+          fi
+
           gcloud run services update ssrtraderdashboardtc01 \
             --region=europe-west1 \
             --update-env-vars="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel,GITHUB_REPO_NAME=trader,GITHUB_REPO_BRANCH=main,ALPACA_BASE_URL=https://paper-api.alpaca.markets,ALPACA_DATA_URL=https://data.alpaca.markets" \
             --set-secrets="GENERAL_ALPACA_API_KEY=GENERAL_ALPACA_API_KEY:latest,GENERAL_ALPACA_SECRET_KEY=GENERAL_ALPACA_SECRET_KEY:latest,KRAKEN_ALPACA_API_KEY=KRAKEN_ALPACA_API_KEY:latest,KRAKEN_ALPACA_SECRET_KEY=KRAKEN_ALPACA_SECRET_KEY:latest,NEWS_ALPACA_API_KEY=NEWS_ALPACA_API_KEY:latest,NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest"
+
+          # Verify the latest revision is actually serving 100% traffic. If
+          # it isn't, the container failed to start (most likely cause:
+          # IAM can't access one of the secrets).
+          LATEST_READY_REV="$(gcloud run services describe ssrtraderdashboardtc01 \
+            --region=europe-west1 \
+            --format='value(status.latestReadyRevisionName)')"
+          TRAFFIC_REV="$(gcloud run services describe ssrtraderdashboardtc01 \
+            --region=europe-west1 \
+            --format='value(status.traffic[0].revisionName)')"
+          echo "latestReadyRevision=${LATEST_READY_REV}"
+          echo "trafficRevision=${TRAFFIC_REV}"
+          if [ "${LATEST_READY_REV}" != "${TRAFFIC_REV}" ]; then
+            echo "ERROR: latest ready revision is not serving traffic — new revision likely crashed on startup."
+            echo "Grant roles/secretmanager.secretAccessor to the Cloud Run runtime SA on each secret, or check revision logs."
+            exit 1
+          fi
 
       - name: Allow Firebase Hosting to invoke Cloud Run (no-IAM-check mode)
         # Background: the usual `firebase deploy` binding is
