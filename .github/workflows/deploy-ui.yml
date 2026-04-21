@@ -90,23 +90,31 @@ jobs:
             --update-env-vars="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel,GITHUB_REPO_NAME=trader,GITHUB_REPO_BRANCH=main,ALPACA_BASE_URL=https://paper-api.alpaca.markets,ALPACA_DATA_URL=https://data.alpaca.markets" \
             --set-secrets="GENERAL_ALPACA_API_KEY=GENERAL_ALPACA_API_KEY:latest,GENERAL_ALPACA_SECRET_KEY=GENERAL_ALPACA_SECRET_KEY:latest,KRAKEN_ALPACA_API_KEY=KRAKEN_ALPACA_API_KEY:latest,KRAKEN_ALPACA_SECRET_KEY=KRAKEN_ALPACA_SECRET_KEY:latest,NEWS_ALPACA_API_KEY=NEWS_ALPACA_API_KEY:latest,NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest"
 
-      - name: Allow unauthenticated invocations (Firebase Hosting rewrite)
-        # `gcloud run services update --set-secrets` resets the service's
-        # IAM policy and drops the allUsers -> run.invoker binding that
-        # firebase deploy originally set up. Without it, Firebase Hosting's
-        # rewrite proxy hits Cloud Run and gets a 401, and every /api/*
-        # route on the deployed dashboard fails silently.
-        # Re-binding after every deploy is the fix.
+      - name: Allow Firebase Hosting to invoke Cloud Run
+        # The default firebase deploy binding is allUsers -> run.invoker.
+        # That's blocked here by the org policy iam.allowedPolicyMemberDomains
+        # (kidsnovel.com Workspace only allows in-domain principals).
         #
-        # Security note: the Cloud Run URL is obscure but not truly secret.
-        # The /api/* routes don't currently verify the Firebase ID token
-        # (TODO noted in lib/alpaca-server.ts). For paper trading + single-
-        # operator private dashboard, acceptable risk. Before live trading,
-        # add firebase-admin.verifyIdToken() checks.
+        # Alternative that satisfies the org policy:
+        #  1. Restrict ingress to load-balancer only (network-level gate).
+        #  2. Grant invoker to the Firebase Hosting service agent
+        #     (Google-managed, in-domain).
+        #
+        # Firebase Hosting's rewrite proxy routes through the managed load
+        # balancer, so step 1 covers the transport; step 2 covers the IAM.
+        # Net effect: dashboard works, and direct hits to the Cloud Run URL
+        # from outside Firebase Hosting are refused.
         run: |
+          PROJECT_NUMBER=928187273797
+          FIREBASE_HOSTING_SA="service-${PROJECT_NUMBER}@gcp-sa-firebasehosting.iam.gserviceaccount.com"
+
+          gcloud run services update ssrtraderdashboardtc01 \
+            --region=europe-west1 \
+            --ingress=internal-and-cloud-load-balancing
+
           gcloud run services add-iam-policy-binding ssrtraderdashboardtc01 \
             --region=europe-west1 \
-            --member=allUsers \
+            --member="serviceAccount:${FIREBASE_HOSTING_SA}" \
             --role=roles/run.invoker
 
       - name: Dump final Cloud Run env for sanity check
