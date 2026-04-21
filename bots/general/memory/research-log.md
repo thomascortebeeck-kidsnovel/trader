@@ -34,3 +34,39 @@ _None._ Bot is fresh-started with no prior weekly-review sign-off. Strategy rule
 - **Any trade** in the 30-min windows around 10:00 ET (Warsh hearing) and 14:30 ET (Waller) — headline whipsaw risk not worth it for a first entry.
 
 **Next routine (market-open) should:** verify AMZN earnings date, read the 08:30 retail sales print, wait for the first 5-min bar after 09:30, then consider QQQ as the seed position at ≤3% above pre-market open, half-size given this is the first trade on a fresh book.
+
+## 2026-04-21 pre-market (refresh 11:21 ET)
+
+**Timing note:** Routine is running ~3h late (post-open). Treating this pass as a catalyst refresh rather than a true pre-market read. Market-open routine has not yet run in this session branch — still no positions, $100k cash, 0 orders.
+
+**New catalysts since the 08:00 pre-market block (all 2026-04-21 ET):**
+- **Retail Sales (March) ACTUAL +1.7% MoM vs +1.4% est, prev +0.6%** — biggest jump since Jan 2023; control group beat by 3.5x. Benzinga framing: "Fed may have less room to cut." Bullish for consumer discretionary (AMZN, XRT) and for risk broadly; mild headwind for duration-sensitive (utilities, long-bond proxies, homebuilders beyond the pending-home-sales pop).
+- **Pending Home Sales (March) +1.5% MoM vs 0.0% est** — another upside beat. Housing tape stronger than feared.
+- **Business Inventories +0.4% vs 0.3% est** — mild; non-event for single-name theses.
+- **Warsh confirmation hearing headlines crossing (10:00–11:20 ET):** "Will be independent of Trump"; "No pre-commitment on rates"; "Fed independence must be earned"; "Balance sheet and rates should work together"; "Don't believe in forward guidance"; divesting to cash/T-bills. Net read: measured, credibility-first tone — not the aggressive easing narrative some feared. Slightly hawkish at the margin, but he's been non-committal.
+- **Senator Tillis re Powell-investigation** — flagged institutional risk: a US Assistant Attorney probing the sitting Fed Chair is a non-zero tail for Fed-independence premium. Watch for any material escalation.
+- **Iran / Pakistan mediation:** Pakistan still awaiting Iran's formal delegation confirmation; ceasefire window closes today. Equity impact so far limited; oil is the cleaner expression.
+- **AMZN add-ons:** (a) Reuters — Anthropic's "Mythos" to be offered to European banks soon (incremental AWS-Anthropic commercialization proof-point); (b) Amazon One Medical launched a GLP-1 weight-management program with upfront medication costs (touches AMGN/LLY/NVO/PFE but durable AMZN healthcare footprint signal, not a standalone catalyst).
+- **TSM / AI-infra:** Gene Munster (Deepwater) calling for +50% hyperscaler AI capex in 2026; frames us as "year three of a five-year AI bull market" led by NVDA + a revamped Siri. House rep disclosed up-to-$15k TSM purchase (not a signal, noise). Confirms the pre-market AI-infra thesis; does not change entry discipline.
+- **AMZN earnings check:** Today's Benzinga earnings block confirmed UNH, GE, MMM, ALK among today's reporters. AMZN earnings are April 30, 2026 (per public calendar) — NOT today. Lifts the conditional AVOID on AMZN for rule #2 purposes, though rule #3 (no-chase >3% above pre-market open) still applies intraday.
+
+### BUY_CANDIDATES (refresh)
+
+_Still none from this routine._ Reason unchanged: no weekly-review sign-off, no confirming session on any name, and the pre-market routine only researches — orders are market-open's job. The macro backdrop is marginally more bullish post-retail-sales (risk-on beat), but the Warsh hearing is still live and the Powell-investigation headline is the kind of institutional wildcard that justifies sitting out on a first-ever entry.
+
+### WATCH (refresh)
+
+- **AMZN** — upgraded from "conditional AVOID" to clean WATCH. Earnings are April 30 (not today), and there are now three stacked catalysts: (1) $100B AWS-Anthropic pact; (2) Anthropic Mythos → European banks; (3) One Medical / GLP-1 footprint expansion. If market-open runs and AMZN is ≤3% above pre-market open AND above 50-day SMA, it qualifies under strategy entry rules. Half-size given this would be the first trade.
+- **QQQ** — still the cleanest first-seed ETF. Retail sales beat supports mega-cap tech demand; AI-infra narrative reinforced by Munster and TSM. Same entry discipline: wait for the first 5-min bar after 09:30, ≤3% above pre-market open, half-size (2.5% of equity).
+- **SPY** — viable alternative to QQQ if the day's dispersion is high and operator prefers broader tilt. Same size/entry rules.
+- **NVDA, AVGO, TSM** — AI-infra WATCH unchanged. No chase; wait for pullback to 50-day.
+- **XRT** — new addition to WATCH. Retail sales blowout directly favors consumer discretionary breadth. Lower conviction than QQQ because the bot's strategy tilts quality, not factor-rotation, but worth monitoring.
+
+### AVOID (refresh)
+
+- **UNH, GE, MMM, ALK** — earnings-day, rule #2 still blocks. No change.
+- **AAPL** — governance overhang (Cook → Ternus, Srouji) still argues for passing. No change.
+- **Any trade in the 30-min window around** the 14:30 ET Waller speech — headline whipsaw risk. The 10:00 Warsh window is already past but the hearing is still live; treat 10:00–12:00 ET as elevated-headline zone.
+- **TQQQ / SQQQ / any leveraged ETF** — out of universe by strategy (rule: no leveraged ETFs). Reiterating because the AI-infra tape will tempt.
+
+**Next routine (market-open) should:** (1) read the post-hearing tape by 12:30 ET; (2) confirm AMZN pre-market open and first 5-min-bar close are within rule #3's 3% band and above its 50-day SMA; (3) confirm QQQ likewise; (4) if both pass, prefer QQQ first (ETF, lowest single-name risk for a cold-start book), then AMZN as the second half-size position only if it independently meets entry rules; (5) respect the 14:30 Waller 30-min avoidance window; (6) cap today's new positions at 2 given first-day-on-book risk, versus the strategy's weekly max of 3.
