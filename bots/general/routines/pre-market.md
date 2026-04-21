@@ -1,6 +1,7 @@
 # Routine: general / pre-market
 
-**Cron (ET):** `0 8 * * 1-5`  (08:00 America/New_York; 1.5 hrs before the open)
+**Cron (ET reference):** `0 8 * * 1-5`  (08:00 America/New_York; 1.5 hrs before the 09:30 ET open)
+**Cron to paste into claude.ai/code (UTC, EDT):** `0 12 * * 1-5`  (winter/EST: `0 13 * * 1-5`)
 **Environment:** `general`
 **Repo:** this repo (push back to `main`)
 

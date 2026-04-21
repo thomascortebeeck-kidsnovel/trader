@@ -104,9 +104,20 @@ jobs:
         # balancer, so step 1 covers the transport; step 2 covers the IAM.
         # Net effect: dashboard works, and direct hits to the Cloud Run URL
         # from outside Firebase Hosting are refused.
+        #
+        # The Firebase Hosting service agent is NOT auto-created in every
+        # project — the first `add-iam-policy-binding` call fails with
+        # "Service account ... does not exist" until we provision it via
+        # `services identity create`. That call is idempotent, so it's
+        # safe to run on every deploy.
         run: |
+          PROJECT_ID=trader-dashboard-tc01
           PROJECT_NUMBER=928187273797
           FIREBASE_HOSTING_SA="service-${PROJECT_NUMBER}@gcp-sa-firebasehosting.iam.gserviceaccount.com"
+
+          gcloud beta services identity create \
+            --service=firebasehosting.googleapis.com \
+            --project="${PROJECT_ID}"
 
           gcloud run services update ssrtraderdashboardtc01 \
             --region=europe-west1 \
