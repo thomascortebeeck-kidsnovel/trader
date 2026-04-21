@@ -42,7 +42,9 @@ Env vars (must exist): `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_BASE_URL`,
    ```
    git add -A
    git commit -m "kraken: pre-market — plan=PLAN, gap=X%, catalyst=Y/N"
-   git push origin main
+   git push origin HEAD
+   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't

@@ -35,7 +35,9 @@ You are the **news** bot, micro strategy. Scan for ticker-tagged headlines from 
    ```
    git add -A
    git commit -m "news: micro-scan HH:MM — N trades"
-   git push origin main
+   git push origin HEAD
+   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't

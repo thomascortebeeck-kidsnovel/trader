@@ -43,7 +43,9 @@ You are the **day-trader** bot. The week is done. Refresh the pattern research, 
    ```
    git add -A
    git commit -m "kraken: weekly review — week of YYYY-MM-DD"
-   git push origin main
+   git push origin HEAD
+   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't

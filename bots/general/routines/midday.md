@@ -26,3 +26,15 @@ Env vars: as listed in CLAUDE.md.
 
 - Don't open new positions at midday. Entries only happen at the open.
 - Don't tighten stops below 4% — winners need room to breathe through afternoon chop.
+
+## Commit + push + PR
+
+At the end of the routine, always:
+
+```bash
+git add -A
+git commit -m "general: midday — loss-cap check, trimmed losers, tightened winners"
+git push origin HEAD
+gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+  --head "$(git rev-parse --abbrev-ref HEAD)" || true
+```

@@ -26,7 +26,9 @@ You are the **news** bot. Closing bell + 15 min. Snapshot, report, and grade tod
    ```
    git add -A
    git commit -m "news: eod — equity $X, vs SPY ±Y%, N trades"
-   git push origin main
+   git push origin HEAD
+   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't

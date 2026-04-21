@@ -24,3 +24,15 @@ You are the **day-trader** bot, after the lunch lull. Time horizon shrinks — o
 
 - Don't enter inside the last 30 min. Use that window to manage, not initiate.
 - Don't average a losing position. Stop is the stop.
+
+## Commit + push + PR
+
+At the end of the routine, always:
+
+```bash
+git add -A
+git commit -m "kraken: trend-scan-2 — manage + possible VWAP-reclaim / reversal"
+git push origin HEAD
+gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+  --head "$(git rev-parse --abbrev-ref HEAD)" || true
+```

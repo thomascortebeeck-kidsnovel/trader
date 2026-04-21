@@ -33,7 +33,9 @@ API keys live in environment variables: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `
    ```
    git add -A
    git commit -m "general: pre-market — research log + reasoning"
-   git push origin main
+   git push origin HEAD
+   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't

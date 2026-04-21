@@ -42,3 +42,15 @@ You are the **day-trader** bot. The first 15 minutes of trading just closed. Tim
 - Don't enter both directions. Whichever confirms first is the trade. If neither confirms by 10:00 ET, no ORB trade today.
 - Don't widen the stop after entry. The stop is the stop.
 - Don't size up because "the move feels strong." Sizing is formulaic.
+
+## Commit + push + PR
+
+At the end of the routine, always:
+
+```bash
+git add -A
+git commit -m "kraken: opening-range — ORB decision + trade if confirmed"
+git push origin HEAD
+gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+  --head "$(git rev-parse --abbrev-ref HEAD)" || true
+```

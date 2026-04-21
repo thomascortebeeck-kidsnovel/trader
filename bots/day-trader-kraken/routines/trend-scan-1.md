@@ -27,3 +27,15 @@ You are the **day-trader** bot, mid-morning. Manage what's open. Look for one co
 
 - Don't enter a 3rd trade today even if a flag forms. Cap is 3.
 - Don't enter after a loss without a 30-min cooldown.
+
+## Commit + push + PR
+
+At the end of the routine, always:
+
+```bash
+git add -A
+git commit -m "kraken: trend-scan-1 — manage + possible flag entry"
+git push origin HEAD
+gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+  --head "$(git rev-parse --abbrev-ref HEAD)" || true
+```

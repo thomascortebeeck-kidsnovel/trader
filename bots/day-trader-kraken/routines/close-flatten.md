@@ -31,7 +31,9 @@ You are the **day-trader** bot. **Force flat by 15:55 ET**, no exceptions, even 
    ```
    git add -A
    git commit -m "kraken: close-flatten — N trades, total ±aR, equity $X"
-   git push origin main
+   git push origin HEAD
+   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't

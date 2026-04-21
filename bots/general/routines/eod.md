@@ -18,7 +18,9 @@ You are the **general** bot. Closing bell. Snapshot the day, send the report.
    ```
    git add -A
    git commit -m "general: eod — equity $X, vs SPY ±Y%"
-   git push origin main
+   git push origin HEAD
+   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
+     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't
