@@ -1,0 +1,31 @@
+name: Auto-merge bot PRs
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: |
+      github.event.pull_request.draft == false &&
+      startsWith(github.head_ref, 'claude/') &&
+      github.head_ref != github.base_ref &&
+      (github.base_ref == 'claude/ai-trading-bot-system-magkk' || github.base_ref == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Squash-merge the PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          gh pr merge "$PR_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --squash \
+            --delete-branch \
+            --subject "$PR_TITLE"
