@@ -111,11 +111,12 @@ jobs:
         # `services identity create`. That call is idempotent, so it's
         # safe to run on every deploy.
         run: |
+          set -euo pipefail
           PROJECT_ID=trader-dashboard-tc01
           PROJECT_NUMBER=928187273797
           FIREBASE_HOSTING_SA="service-${PROJECT_NUMBER}@gcp-sa-firebasehosting.iam.gserviceaccount.com"
 
-          gcloud beta services identity create \
+          gcloud services identity create \
             --service=firebasehosting.googleapis.com \
             --project="${PROJECT_ID}"
 
@@ -123,10 +124,22 @@ jobs:
             --region=europe-west1 \
             --ingress=internal-and-cloud-load-balancing
 
-          gcloud run services add-iam-policy-binding ssrtraderdashboardtc01 \
-            --region=europe-west1 \
-            --member="serviceAccount:${FIREBASE_HOSTING_SA}" \
-            --role=roles/run.invoker
+          # IAM propagation after services-identity-create can lag up to a
+          # minute on a first-time provision — retry the binding with a
+          # short backoff before failing the job.
+          for attempt in 1 2 3 4 5; do
+            if gcloud run services add-iam-policy-binding ssrtraderdashboardtc01 \
+                --region=europe-west1 \
+                --member="serviceAccount:${FIREBASE_HOSTING_SA}" \
+                --role=roles/run.invoker; then
+              echo "IAM binding succeeded on attempt ${attempt}"
+              exit 0
+            fi
+            echo "IAM binding attempt ${attempt} failed — waiting 15s for service agent to propagate"
+            sleep 15
+          done
+          echo "IAM binding still failing after 5 attempts"
+          exit 1
 
       - name: Dump final Cloud Run env for sanity check
         run: |
