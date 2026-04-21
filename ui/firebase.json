@@ -7,7 +7,16 @@
       "**/node_modules/**"
     ],
     "frameworksBackend": {
-      "region": "europe-west1"
+      "region": "europe-west1",
+      "secrets": [
+        "GENERAL_ALPACA_API_KEY",
+        "GENERAL_ALPACA_SECRET_KEY",
+        "KRAKEN_ALPACA_API_KEY",
+        "KRAKEN_ALPACA_SECRET_KEY",
+        "NEWS_ALPACA_API_KEY",
+        "NEWS_ALPACA_SECRET_KEY",
+        "GITHUB_TOKEN"
+      ]
     }
   }
 }
