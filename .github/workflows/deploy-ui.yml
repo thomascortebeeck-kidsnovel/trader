@@ -116,9 +116,25 @@ jobs:
           PROJECT_NUMBER=928187273797
           FIREBASE_HOSTING_SA="service-${PROJECT_NUMBER}@gcp-sa-firebasehosting.iam.gserviceaccount.com"
 
-          gcloud services identity create \
-            --service=firebasehosting.googleapis.com \
-            --project="${PROJECT_ID}"
+          # Provision the Firebase Hosting Google-managed service agent.
+          # It is not auto-created when Hosting itself is enabled — it's
+          # created lazily the first time Google needs it. Our IAM bind
+          # below fails with 'Service account ... does not exist' until
+          # this call runs once.
+          #
+          # Equivalent to `gcloud beta services identity create
+          # --service=firebasehosting.googleapis.com`, but the beta
+          # gcloud component is not installed by default on
+          # google-github-actions/setup-gcloud@v2, and the non-beta
+          # `gcloud services identity create` does not exist. Calling the
+          # underlying REST endpoint avoids the component dependency
+          # entirely. The endpoint is idempotent.
+          ACCESS_TOKEN="$(gcloud auth print-access-token)"
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "https://serviceusage.googleapis.com/v1beta1/projects/${PROJECT_ID}/services/firebasehosting.googleapis.com:generateServiceIdentity"
+          echo
 
           gcloud run services update ssrtraderdashboardtc01 \
             --region=europe-west1 \
