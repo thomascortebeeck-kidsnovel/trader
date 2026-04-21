@@ -49,3 +49,19 @@ Bench (SPY): -0.19% — bot vs bench: +0.19%
 Trades today: 0 (0 winners, 0 losers, 0 B&E)
 Best: — none   Worst: — none
 Notes: Market-open routine never ran; book stayed in cash. SPY dipped -0.19% so idle beat it by coincidence. Watch tomorrow: re-read refreshed WATCH list (QQQ seed, AMZN clean) and actually execute market-open if conditions hold.
+
+## 2026-04-21 12:00 general midday
+
+**Saw:** Midday routine invoked on a fresh branch (`claude/beautiful-wright-CZGHr`). Alpaca account reports equity $100,000.00, last_equity $100,000.00, cash $100,000.00, long_market_value $0, zero positions. Day-P/L is exactly 0.00% — nowhere near the −2% daily loss cap. Trade log is empty. Nothing to defend because there is nothing in the book.
+
+**Did:**
+- Read CLAUDE.md, strategy.md, trade-log.md (empty), today's reasoning blocks (pre-market, 11:21 refresh, 16:02 EOD from prior branch).
+- Ran `scripts/alpaca.py account` — confirmed flat $100k, 0 P/L.
+- Ran `scripts/alpaca.py positions` — empty list.
+- No loss-cap halt triggered. No losers to cut (no positions). No winners to tighten stops on (no positions). No new entries allowed at midday per routine.
+- Journaled this block. Skipping ClickUp notification (no loser cut, no cap hit, per step 6).
+- Will commit + push + open PR.
+
+**Why:** Midday is a defensive routine — its only legitimate actions are loss-cap halt, cut losers ≤ −7%, tighten stops on winners ≥ +15%. With zero positions, all three branches are no-ops. The only work at midday on a flat book is to record the state so downstream routines (EOD, weekly-review) have continuity. The prior EOD block (16:02 on a different branch) flagged the execution gap where market-open/midday didn't fire — today's midday is firing on this branch but there were still no market-open fills for it to defend.
+
+**Watch:** (1) Market-open routine still hasn't fired today on this branch — if it doesn't run by ~14:00 ET the book will close flat again; (2) EOD routine on this branch should capture SPY close and append benchmark row; (3) tomorrow's pre-market should re-verify AMZN earnings date (April 30) and refresh the WATCH list; (4) avoid entries around the 14:30 ET Waller speech window flagged in the 11:21 refresh.
