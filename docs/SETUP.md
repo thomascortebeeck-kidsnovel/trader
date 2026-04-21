@@ -88,24 +88,28 @@ For each routine: paste the **Name** and **Cron** from the table below, pick the
 
 ### Progress checklist
 
-| # | Name                         | Environment           | Cron (ET)              | Prompt file                                                          |
-|---|------------------------------|------------------------|------------------------|----------------------------------------------------------------------|
-| 1 | `general / pre-market`       | `general`              | `0 8 * * 1-5`          | [`bots/general/routines/pre-market.md`](../bots/general/routines/pre-market.md) |
-| 2 | `general / market-open`      | `general`              | `0 10 * * 1-5`         | [`bots/general/routines/market-open.md`](../bots/general/routines/market-open.md) |
-| 3 | `general / midday`           | `general`              | `0 12 * * 1-5`         | [`bots/general/routines/midday.md`](../bots/general/routines/midday.md) |
-| 4 | `general / eod`              | `general`              | `0 16 * * 1-5`         | [`bots/general/routines/eod.md`](../bots/general/routines/eod.md) |
-| 5 | `general / weekly-review`    | `general`              | `30 16 * * 5`          | [`bots/general/routines/weekly-review.md`](../bots/general/routines/weekly-review.md) |
-| 6 | `kraken / pre-market`        | `day-trader-kraken`    | `15 8 * * 1-5`         | [`bots/day-trader-kraken/routines/pre-market.md`](../bots/day-trader-kraken/routines/pre-market.md) |
-| 7 | `kraken / opening-range`     | `day-trader-kraken`    | `45 9 * * 1-5`         | [`bots/day-trader-kraken/routines/opening-range.md`](../bots/day-trader-kraken/routines/opening-range.md) |
-| 8 | `kraken / trend-scan-1`      | `day-trader-kraken`    | `30 10 * * 1-5`        | [`bots/day-trader-kraken/routines/trend-scan-1.md`](../bots/day-trader-kraken/routines/trend-scan-1.md) |
-| 9 | `kraken / trend-scan-2`      | `day-trader-kraken`    | `30 13 * * 1-5`        | [`bots/day-trader-kraken/routines/trend-scan-2.md`](../bots/day-trader-kraken/routines/trend-scan-2.md) |
-|10 | `kraken / close-flatten`     | `day-trader-kraken`    | `50 15 * * 1-5`        | [`bots/day-trader-kraken/routines/close-flatten.md`](../bots/day-trader-kraken/routines/close-flatten.md) |
-|11 | `kraken / weekly-review`     | `day-trader-kraken`    | `30 16 * * 5`          | [`bots/day-trader-kraken/routines/weekly-review.md`](../bots/day-trader-kraken/routines/weekly-review.md) |
-|12 | `news / pre-market-news`     | `news-based`           | `30 7 * * 1-5`         | [`bots/news-based/routines/pre-market-news.md`](../bots/news-based/routines/pre-market-news.md) |
-|13 | `news / micro-scan`          | `news-based`           | `*/30 9-15 * * 1-5`    | [`bots/news-based/routines/micro-scan.md`](../bots/news-based/routines/micro-scan.md) |
-|14 | `news / macro-scan`          | `news-based`           | `15 9-15/1 * * 1-5`    | [`bots/news-based/routines/macro-scan.md`](../bots/news-based/routines/macro-scan.md) |
-|15 | `news / eod`                 | `news-based`           | `15 16 * * 1-5`        | [`bots/news-based/routines/eod.md`](../bots/news-based/routines/eod.md) |
-|16 | `news / weekly-review`       | `news-based`           | `0 17 * * 5`           | [`bots/news-based/routines/weekly-review.md`](../bots/news-based/routines/weekly-review.md) |
+**IMPORTANT — Cron is evaluated in UTC** by claude.ai/code, NOT in America/New_York. The table below gives UTC equivalents assuming EDT (ET+4, valid Mar–Nov). In winter (EST, ET+5), add an extra +1 hour to every cron hour field. The "Cron (ET)" column is kept for reference.
+
+Paste the UTC cron into claude.ai/code. The claude.ai timezone selector doesn't change cron interpretation — leave it at the default. Drift on DST transitions = 1 hour for a few days until you update; acceptable for this project.
+
+| # | Name                         | Environment           | Cron (ET) — reference  | **Cron (UTC, EDT)**       | Prompt file                                                          |
+|---|------------------------------|------------------------|------------------------|----------------------------|----------------------------------------------------------------------|
+| 1 | `general / pre-market`       | `general`              | `0 8 * * 1-5`          | `0 12 * * 1-5`             | [`bots/general/routines/pre-market.md`](../bots/general/routines/pre-market.md) |
+| 2 | `general / market-open`      | `general`              | `0 10 * * 1-5`         | `0 14 * * 1-5`             | [`bots/general/routines/market-open.md`](../bots/general/routines/market-open.md) |
+| 3 | `general / midday`           | `general`              | `0 12 * * 1-5`         | `0 16 * * 1-5`             | [`bots/general/routines/midday.md`](../bots/general/routines/midday.md) |
+| 4 | `general / eod`              | `general`              | `0 16 * * 1-5`         | `0 20 * * 1-5`             | [`bots/general/routines/eod.md`](../bots/general/routines/eod.md) |
+| 5 | `general / weekly-review`    | `general`              | `30 16 * * 5`          | `30 20 * * 5`              | [`bots/general/routines/weekly-review.md`](../bots/general/routines/weekly-review.md) |
+| 6 | `kraken / pre-market`        | `day-trader-kraken`    | `15 8 * * 1-5`         | `15 12 * * 1-5`            | [`bots/day-trader-kraken/routines/pre-market.md`](../bots/day-trader-kraken/routines/pre-market.md) |
+| 7 | `kraken / opening-range`     | `day-trader-kraken`    | `45 9 * * 1-5`         | `45 13 * * 1-5`            | [`bots/day-trader-kraken/routines/opening-range.md`](../bots/day-trader-kraken/routines/opening-range.md) |
+| 8 | `kraken / trend-scan-1`      | `day-trader-kraken`    | `30 10 * * 1-5`        | `30 14 * * 1-5`            | [`bots/day-trader-kraken/routines/trend-scan-1.md`](../bots/day-trader-kraken/routines/trend-scan-1.md) |
+| 9 | `kraken / trend-scan-2`      | `day-trader-kraken`    | `30 13 * * 1-5`        | `30 17 * * 1-5`            | [`bots/day-trader-kraken/routines/trend-scan-2.md`](../bots/day-trader-kraken/routines/trend-scan-2.md) |
+|10 | `kraken / close-flatten`     | `day-trader-kraken`    | `50 15 * * 1-5`        | `50 19 * * 1-5`            | [`bots/day-trader-kraken/routines/close-flatten.md`](../bots/day-trader-kraken/routines/close-flatten.md) |
+|11 | `kraken / weekly-review`     | `day-trader-kraken`    | `30 16 * * 5`          | `30 20 * * 5`              | [`bots/day-trader-kraken/routines/weekly-review.md`](../bots/day-trader-kraken/routines/weekly-review.md) |
+|12 | `news / pre-market-news`     | `news-based`           | `30 7 * * 1-5`         | `30 11 * * 1-5`            | [`bots/news-based/routines/pre-market-news.md`](../bots/news-based/routines/pre-market-news.md) |
+|13 | `news / micro-scan`          | `news-based`           | `*/30 9-15 * * 1-5`    | `*/30 13-19 * * 1-5`       | [`bots/news-based/routines/micro-scan.md`](../bots/news-based/routines/micro-scan.md) |
+|14 | `news / macro-scan`          | `news-based`           | `15 9-15/1 * * 1-5`    | `15 13-19/1 * * 1-5`       | [`bots/news-based/routines/macro-scan.md`](../bots/news-based/routines/macro-scan.md) |
+|15 | `news / eod`                 | `news-based`           | `15 16 * * 1-5`        | `15 20 * * 1-5`            | [`bots/news-based/routines/eod.md`](../bots/news-based/routines/eod.md) |
+|16 | `news / weekly-review`       | `news-based`           | `0 17 * * 5`           | `0 21 * * 5`               | [`bots/news-based/routines/weekly-review.md`](../bots/news-based/routines/weekly-review.md) |
 
 **Tip (mobile):** tap a prompt file link → tap the "raw" or "⋯ → raw" button → long-press to select all → copy → go back to the routine page → paste.
 
