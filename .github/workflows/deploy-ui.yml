@@ -127,6 +127,16 @@ jobs:
             --update-env-vars="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel,GITHUB_REPO_NAME=trader,GITHUB_REPO_BRANCH=main,ALPACA_BASE_URL=https://paper-api.alpaca.markets,ALPACA_DATA_URL=https://data.alpaca.markets" \
             --set-secrets="GENERAL_ALPACA_API_KEY=GENERAL_ALPACA_API_KEY:latest,GENERAL_ALPACA_SECRET_KEY=GENERAL_ALPACA_SECRET_KEY:latest,KRAKEN_ALPACA_API_KEY=KRAKEN_ALPACA_API_KEY:latest,KRAKEN_ALPACA_SECRET_KEY=KRAKEN_ALPACA_SECRET_KEY:latest,NEWS_ALPACA_API_KEY=NEWS_ALPACA_API_KEY:latest,NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest"
 
+          # firebase deploy creates the initial revision with an explicit
+          # traffic pin (traffic[0].revisionName=<initial>, percent=100)
+          # instead of the "latest revision" auto-promote mode. As a
+          # result, the new revision we just built with --set-secrets is
+          # Ready but doesn't actually serve traffic — the old, empty-env
+          # revision does. Explicitly promote latest to 100%.
+          gcloud run services update-traffic ssrtraderdashboardtc01 \
+            --region=europe-west1 \
+            --to-latest
+
           # Verify the latest revision is actually serving 100% traffic. If
           # it isn't, the container failed to start (most likely cause:
           # IAM can't access one of the secrets).
