@@ -7,6 +7,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write  # needed to workflow_dispatch Deploy UI after merge
 
 jobs:
   auto-merge:
@@ -17,6 +18,19 @@ jobs:
       github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
+      - name: Collect changed paths before merge
+        id: changes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          files="$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json files --jq '.files[].path')"
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$files"      >> "$GITHUB_OUTPUT"
+          echo "EOF"         >> "$GITHUB_OUTPUT"
+
       - name: Squash-merge the PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -29,3 +43,29 @@ jobs:
             --squash \
             --delete-branch \
             --subject "$PR_TITLE"
+
+      # Merges performed by the built-in GITHUB_TOKEN do NOT trigger other
+      # workflows (GitHub security feature — prevents infinite workflow
+      # recursion). That means deploy-ui.yml's `push: branches: [main]`
+      # trigger silently skips auto-merged PRs, and only runs when a human
+      # pushes to main. We explicitly dispatch it here so the deploy
+      # pipeline still fires on bot-merged PRs that touched UI paths.
+      #
+      # deploy-ui.yml already exposes `workflow_dispatch: {}`, so this is
+      # just a targeted trigger. Dispatches from GITHUB_TOKEN arrive as a
+      # fresh event, not a chained workflow, so the dispatched run does
+      # trigger normally.
+      - name: Dispatch Deploy UI if merged PR touched deploy paths
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CHANGED: ${{ steps.changes.outputs.files }}
+        run: |
+          if printf '%s\n' "$CHANGED" | grep -qE '^(ui/|\.github/workflows/deploy-ui\.yml$)'; then
+            echo "Merged PR touched ui/ or deploy-ui.yml; dispatching Deploy UI on main."
+            gh workflow run deploy-ui.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              --ref main
+          else
+            echo "Merged PR did not touch deploy paths; skipping Deploy UI dispatch."
+          fi
