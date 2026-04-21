@@ -25,3 +25,27 @@ Append-only. Every routine writes a dated block (Saw / Did / Why / Watch).
 **Why:** The macro tape is net bullish (strong retail sales, strong pending home sales, AI-infra thesis reinforced) but the Warsh hearing is producing live Fed-policy headlines and the Powell-investigation angle is the kind of institutional wildcard that rewards patience on a cold-start book. No position today beats a forced entry into headline-driven chop. The strategy's entry rules (catalyst + structure + ≤3% above pre-market open + no earnings-day) are all verifiable by market-open, which is the right place to actually pull the trigger. Dissenting view I'm discounting: the retail-sales beat could mark the high-water risk-on print of the week and waiting could cost the first entry ~0.5–1% — accepted, because on a fresh book the opportunity cost of one missed bar is tiny vs. the cost of anchoring day one at a bad entry.
 
 **Watch:** Market-open routine should (1) confirm post-Warsh tape by 12:30 ET; (2) verify QQQ and AMZN structure (above 50-day SMA) and rule #3 (≤3% above pre-market open) at entry; (3) prefer QQQ first half-size (~2.5% equity), then AMZN half-size only if independently qualifying; (4) hard-avoid the 14:00–15:00 ET Waller window; (5) cap today's new entries at 2 vs the strategy's weekly max of 3; (6) set 10% trailing stops on any fill and log to trade-log.md.
+
+## 2026-04-21 16:02 general eod
+
+**Saw:** Closing-bell snapshot on a cold-start book. Alpaca reports equity $100,000.00, last_equity $100,000.00, cash $100,000.00, long/short market value $0, zero positions, zero filled orders. Market-open and midday routines never ran on this branch, so the two pre-market research refreshes were the only activity of the day. SPY daily close 707.41 vs prev close 708.79 = −0.19% on the day; intraday range 706.09–711.25, opened 710.165 (so SPY gapped up on the retail-sales beat then faded through the session). Tape color from the earlier refresh: Retail Sales +1.7% (well above +1.4% est), Pending Home Sales +1.5% vs 0.0% est, Warsh hearing measured/slightly-hawkish, Powell-investigation tail-risk headline, AMZN earnings confirmed April 30 (not today). Benchmark row appended for 2026-04-21: equity 100000.00, day_pl +0.00, SPY 707.41, bot_vs_bench +0.19% (bot was flat while SPY gave back 0.19% — outperformance is mechanical, not earned).
+
+**Did:**
+- Read strategy.md, today's trade-log (empty), benchmark.md (empty until today), today's reasoning blocks.
+- Ran `scripts/alpaca.py account` and `positions` — confirmed flat $100k book, zero positions.
+- Ran `scripts/alpaca.py snapshot SPY` — captured 707.41 daily close.
+- Appended today's row to `memory/benchmark.md` per benchmark skill.
+- Sent EOD ClickUp message via `scripts/notify.py` per report skill.
+- No trades placed (EOD routine is read-only on Alpaca order endpoints; also market-open/midday never ran so there was nothing to close or trim).
+- Journaled this block and will commit + push on `claude/awesome-wright-Jk0ET`, then open a PR.
+
+**Why:** Day-one of a fresh paper book ended with zero fills because the market-open and midday routines did not execute — only the two pre-market research passes ran. Given the routine definition (EOD is read-only with respect to order endpoints), nothing I could legitimately do at 16:02 ET would have improved today's outcome; the right action was to snapshot, report, and journal the fact so tomorrow's market-open routine doesn't repeat the execution gap. The +0.19% vs SPY is not a signal — it is a coincidence of being in cash while the index faded 0.19%, and it should not be cited as "alpha." Dissenting view I am logging: one could argue the prudent move on day one is exactly this — research, sit out, preserve 100% of capital, reassess. That framing is consistent with the strategy's "when unsure, do nothing" rule and with the cold-start posture. Accepted as the generous reading; still, the harder truth is that the execution scheduler (market-open/midday) failed to fire and that operational issue is the real story of today.
+
+**Watch:** Tomorrow's pre-market / market-open should (1) verify market-open routine is actually scheduled and will fire at 09:30 ET — the execution gap is the #1 issue to close; (2) re-read the refreshed WATCH list from today's 11:21 research block (QQQ as first half-size seed, AMZN clean after earnings-date confirmation, SPY as broader alternative, NVDA/AVGO/TSM on pullback only, XRT lower-conviction); (3) re-verify AMZN April 30 earnings date and ensure no entries on 04-29/04-30; (4) if tomorrow has any FOMC/CPI/NFP print, tighten entry discipline further; (5) cap day-one (i.e. first-actual-fills day) entries at 2 half-size positions per today's final guidance; (6) confirm 10% trailing stops on any fills and log every fill to trade-log.md; (7) start a weekly-review stub for the week so the Friday routine has a thesis to close against.
+
+[GENERAL] EOD 2026-04-21
+Equity: $100000.00 (today: +0.00%)
+Bench (SPY): -0.19% — bot vs bench: +0.19%
+Trades today: 0 (0 winners, 0 losers, 0 B&E)
+Best: — none   Worst: — none
+Notes: Market-open routine never ran; book stayed in cash. SPY dipped -0.19% so idle beat it by coincidence. Watch tomorrow: re-read refreshed WATCH list (QQQ seed, AMZN clean) and actually execute market-open if conditions hold.
