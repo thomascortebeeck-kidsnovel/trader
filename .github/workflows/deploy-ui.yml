@@ -46,6 +46,23 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Nuke Cloud Run service if it exists (one-time repair)
+        # The existing Cloud Run service has phantom UUID secret refs written
+        # by Firebase Frameworks that gcloud's client-side parser can't read,
+        # so every --update / --clear call crashes with 'Invalid secret path
+        # in annotation'. Deleting bypasses the parser entirely (the delete
+        # API call doesn't validate annotations on the way out). firebase
+        # deploy below then recreates the service clean, and the post-deploy
+        # step binds real secrets into the fresh spec.
+        #
+        # This step is safe to keep running even after repair — if the
+        # service is in a healthy state, delete + recreate costs ~30s of
+        # extra deploy time but produces identical output.
+        run: |
+          gcloud run services delete ssrtraderdashboardtc01 \
+            --region=europe-west1 \
+            --quiet || echo "service did not exist, continuing"
+
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
@@ -64,18 +81,11 @@ jobs:
 
       - name: Bind runtime env vars + secrets on Cloud Run
         # Firebase Frameworks' Next.js integration does not reliably honor
-        # frameworksBackend.env / .secrets in firebase.json — it creates phantom
-        # UUID-aliased secret refs instead of referencing our real secrets.
-        # We bypass it entirely and configure runtime env directly on the
-        # Cloud Run service after firebase deploy succeeds.
-        #
-        # Split into two calls because --set-secrets alone crashes gcloud with
-        # "Invalid secret path in annotation" when any phantom UUID ref is
-        # still in place. --clear-secrets wipes annotations clean first.
+        # frameworksBackend.env / .secrets in firebase.json — we bypass it
+        # entirely and configure runtime env directly on Cloud Run here.
+        # Runs against the freshly-recreated service, so no phantom refs
+        # exist and --set-secrets succeeds on the first call.
         run: |
-          gcloud run services update ssrtraderdashboardtc01 \
-            --region=europe-west1 \
-            --clear-secrets
           gcloud run services update ssrtraderdashboardtc01 \
             --region=europe-west1 \
             --update-env-vars="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel,GITHUB_REPO_NAME=trader,GITHUB_REPO_BRANCH=claude/ai-trading-bot-system-magkk,ALPACA_BASE_URL=https://paper-api.alpaca.markets,ALPACA_DATA_URL=https://data.alpaca.markets" \
