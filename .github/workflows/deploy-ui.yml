@@ -43,6 +43,9 @@ jobs:
           workload_identity_provider: projects/928187273797/locations/global/workloadIdentityPools/github/providers/github-provider
           service_account: github-actions-deploy@trader-dashboard-tc01.iam.gserviceaccount.com
 
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
@@ -57,7 +60,17 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
-          GITHUB_REPO_OWNER: ${{ github.repository_owner }}
-          GITHUB_REPO_NAME: ${{ github.event.repository.name }}
-          GITHUB_REPO_BRANCH: ${{ github.ref_name }}
         run: firebase deploy --project=trader-dashboard-tc01 --non-interactive --force
+
+      - name: Bind runtime env vars + secrets on Cloud Run
+        # Firebase Frameworks' Next.js integration does not reliably honor
+        # frameworksBackend.env / .secrets in firebase.json — it creates phantom
+        # UUID-aliased secret refs instead of referencing our real secrets.
+        # We bypass it entirely and configure runtime env directly on the
+        # Cloud Run service after firebase deploy succeeds. --set-secrets
+        # REPLACES the full secret list so any phantoms get swept away.
+        run: |
+          gcloud run services update ssrtraderdashboardtc01 \
+            --region=europe-west1 \
+            --update-env-vars="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel,GITHUB_REPO_NAME=trader,GITHUB_REPO_BRANCH=claude/ai-trading-bot-system-magkk,ALPACA_BASE_URL=https://paper-api.alpaca.markets,ALPACA_DATA_URL=https://data.alpaca.markets" \
+            --set-secrets="GENERAL_ALPACA_API_KEY=GENERAL_ALPACA_API_KEY:latest,GENERAL_ALPACA_SECRET_KEY=GENERAL_ALPACA_SECRET_KEY:latest,KRAKEN_ALPACA_API_KEY=KRAKEN_ALPACA_API_KEY:latest,KRAKEN_ALPACA_SECRET_KEY=KRAKEN_ALPACA_SECRET_KEY:latest,NEWS_ALPACA_API_KEY=NEWS_ALPACA_API_KEY:latest,NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest"
