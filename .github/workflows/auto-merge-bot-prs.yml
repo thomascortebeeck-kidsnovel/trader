@@ -14,7 +14,7 @@ jobs:
       github.event.pull_request.draft == false &&
       startsWith(github.head_ref, 'claude/') &&
       github.head_ref != github.base_ref &&
-      (github.base_ref == 'claude/ai-trading-bot-system-magkk' || github.base_ref == 'main')
+      github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Squash-merge the PR

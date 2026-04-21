@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/ai-trading-bot-system-magkk
     paths:
       - 'ui/**'
       - '.github/workflows/deploy-ui.yml'
@@ -88,5 +87,30 @@ jobs:
         run: |
           gcloud run services update ssrtraderdashboardtc01 \
             --region=europe-west1 \
-            --update-env-vars="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel,GITHUB_REPO_NAME=trader,GITHUB_REPO_BRANCH=claude/ai-trading-bot-system-magkk,ALPACA_BASE_URL=https://paper-api.alpaca.markets,ALPACA_DATA_URL=https://data.alpaca.markets" \
+            --update-env-vars="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel,GITHUB_REPO_NAME=trader,GITHUB_REPO_BRANCH=main,ALPACA_BASE_URL=https://paper-api.alpaca.markets,ALPACA_DATA_URL=https://data.alpaca.markets" \
             --set-secrets="GENERAL_ALPACA_API_KEY=GENERAL_ALPACA_API_KEY:latest,GENERAL_ALPACA_SECRET_KEY=GENERAL_ALPACA_SECRET_KEY:latest,KRAKEN_ALPACA_API_KEY=KRAKEN_ALPACA_API_KEY:latest,KRAKEN_ALPACA_SECRET_KEY=KRAKEN_ALPACA_SECRET_KEY:latest,NEWS_ALPACA_API_KEY=NEWS_ALPACA_API_KEY:latest,NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest"
+
+      - name: Allow unauthenticated invocations (Firebase Hosting rewrite)
+        # `gcloud run services update --set-secrets` resets the service's
+        # IAM policy and drops the allUsers -> run.invoker binding that
+        # firebase deploy originally set up. Without it, Firebase Hosting's
+        # rewrite proxy hits Cloud Run and gets a 401, and every /api/*
+        # route on the deployed dashboard fails silently.
+        # Re-binding after every deploy is the fix.
+        #
+        # Security note: the Cloud Run URL is obscure but not truly secret.
+        # The /api/* routes don't currently verify the Firebase ID token
+        # (TODO noted in lib/alpaca-server.ts). For paper trading + single-
+        # operator private dashboard, acceptable risk. Before live trading,
+        # add firebase-admin.verifyIdToken() checks.
+        run: |
+          gcloud run services add-iam-policy-binding ssrtraderdashboardtc01 \
+            --region=europe-west1 \
+            --member=allUsers \
+            --role=roles/run.invoker
+
+      - name: Dump final Cloud Run env for sanity check
+        run: |
+          gcloud run services describe ssrtraderdashboardtc01 \
+            --region=europe-west1 \
+            --format="yaml(spec.template.spec.containers[0].env,spec.template.spec.containers[0].image)"

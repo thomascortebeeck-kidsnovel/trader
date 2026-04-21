@@ -44,7 +44,7 @@ Env vars (must exist): `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_BASE_URL`,
 Then open a PR with the GitHub MCP tool `create_pull_request`:
 - `owner`: `thomascortebeeck-kidsnovel`
 - `repo`: `trader`
-- `base`: `claude/ai-trading-bot-system-magkk`
+- `base`: `main`
 - `head`: the current session branch (run `git rev-parse --abbrev-ref HEAD`)
 - `title`: same as the commit message
 
