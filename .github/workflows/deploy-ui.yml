@@ -67,9 +67,15 @@ jobs:
         # frameworksBackend.env / .secrets in firebase.json — it creates phantom
         # UUID-aliased secret refs instead of referencing our real secrets.
         # We bypass it entirely and configure runtime env directly on the
-        # Cloud Run service after firebase deploy succeeds. --set-secrets
-        # REPLACES the full secret list so any phantoms get swept away.
+        # Cloud Run service after firebase deploy succeeds.
+        #
+        # Split into two calls because --set-secrets alone crashes gcloud with
+        # "Invalid secret path in annotation" when any phantom UUID ref is
+        # still in place. --clear-secrets wipes annotations clean first.
         run: |
+          gcloud run services update ssrtraderdashboardtc01 \
+            --region=europe-west1 \
+            --clear-secrets
           gcloud run services update ssrtraderdashboardtc01 \
             --region=europe-west1 \
             --update-env-vars="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel,GITHUB_REPO_NAME=trader,GITHUB_REPO_BRANCH=claude/ai-trading-bot-system-magkk,ALPACA_BASE_URL=https://paper-api.alpaca.markets,ALPACA_DATA_URL=https://data.alpaca.markets" \

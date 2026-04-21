@@ -34,11 +34,18 @@ Env vars (must exist): `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_BASE_URL`,
    git add -A
    git commit -m "general: market-open — N trades"
    git push origin HEAD
-   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
-     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't
 
 - Don't trade in the 30 min before/after a known FOMC / CPI / NFP release (read today's pre-market block — it flagged any).
 - Don't place stops as separate orders if Alpaca's `trail_percent` field on the entry already covers it.
+
+Then open a PR with the GitHub MCP tool `create_pull_request`:
+- `owner`: `thomascortebeeck-kidsnovel`
+- `repo`: `trader`
+- `base`: `claude/ai-trading-bot-system-magkk`
+- `head`: the current session branch (run `git rev-parse --abbrev-ref HEAD`)
+- `title`: same as the commit message
+
+If the MCP tool isn't available in this session, flag it in your summary and stop — the push already succeeded, a human can merge the session branch manually.

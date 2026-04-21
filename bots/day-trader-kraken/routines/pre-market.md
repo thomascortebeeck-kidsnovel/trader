@@ -43,8 +43,6 @@ Env vars (must exist): `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_BASE_URL`,
    git add -A
    git commit -m "kraken: pre-market — plan=PLAN, gap=X%, catalyst=Y/N"
    git push origin HEAD
-   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
-     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't
@@ -52,3 +50,12 @@ Env vars (must exist): `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_BASE_URL`,
 - Don't trade in this routine. Pre-market is read-only with respect to orders.
 - Don't notify ClickUp from pre-market (noise). Only the trading routines and the EOD weekly-review notify.
 - Don't use Perplexity here unless the news ingest left the catalyst genuinely ambiguous. Costs add up.
+
+Then open a PR with the GitHub MCP tool `create_pull_request`:
+- `owner`: `thomascortebeeck-kidsnovel`
+- `repo`: `trader`
+- `base`: `claude/ai-trading-bot-system-magkk`
+- `head`: the current session branch (run `git rev-parse --abbrev-ref HEAD`)
+- `title`: same as the commit message
+
+If the MCP tool isn't available in this session, flag it in your summary and stop — the push already succeeded, a human can merge the session branch manually.

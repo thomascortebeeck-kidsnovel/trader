@@ -34,11 +34,18 @@ API keys live in environment variables: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `
    git add -A
    git commit -m "general: pre-market — research log + reasoning"
    git push origin HEAD
-   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
-     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't
 
 - Don't notify ClickUp from this routine. It's noisy. Notifications come from market-open (only if a trade was placed) and EOD.
 - Don't pre-place limit orders here. Decisions happen at the open after the first 5-min bar.
+
+Then open a PR with the GitHub MCP tool `create_pull_request`:
+- `owner`: `thomascortebeeck-kidsnovel`
+- `repo`: `trader`
+- `base`: `claude/ai-trading-bot-system-magkk`
+- `head`: the current session branch (run `git rev-parse --abbrev-ref HEAD`)
+- `title`: same as the commit message
+
+If the MCP tool isn't available in this session, flag it in your summary and stop — the push already succeeded, a human can merge the session branch manually.

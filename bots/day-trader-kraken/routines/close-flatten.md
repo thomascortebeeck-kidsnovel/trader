@@ -32,11 +32,18 @@ You are the **day-trader** bot. **Force flat by 15:55 ET**, no exceptions, even 
    git add -A
    git commit -m "kraken: close-flatten — N trades, total ±aR, equity $X"
    git push origin HEAD
-   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
-     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't
 
 - Don't carry "just a small position" overnight. The strategy is intraday only.
 - Don't alter `pattern-research.md` from this routine. That's the weekly-review's job.
+
+Then open a PR with the GitHub MCP tool `create_pull_request`:
+- `owner`: `thomascortebeeck-kidsnovel`
+- `repo`: `trader`
+- `base`: `claude/ai-trading-bot-system-magkk`
+- `head`: the current session branch (run `git rev-parse --abbrev-ref HEAD`)
+- `title`: same as the commit message
+
+If the MCP tool isn't available in this session, flag it in your summary and stop — the push already succeeded, a human can merge the session branch manually.

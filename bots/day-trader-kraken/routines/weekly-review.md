@@ -44,8 +44,6 @@ You are the **day-trader** bot. The week is done. Refresh the pattern research, 
    git add -A
    git commit -m "kraken: weekly review — week of YYYY-MM-DD"
    git push origin HEAD
-   gh pr create --fill --base claude/ai-trading-bot-system-magkk \
-     --head "$(git rev-parse --abbrev-ref HEAD)" || true
    ```
 
 ## Don't
@@ -53,3 +51,12 @@ You are the **day-trader** bot. The week is done. Refresh the pattern research, 
 - Don't loosen the hard rules in `strategy.md`. Only the operator does that.
 - Don't graduate to live mode. Operator's call.
 - Don't overwrite the "Don't" sections in `pattern-research.md` — they're meant to survive the weekly refresh.
+
+Then open a PR with the GitHub MCP tool `create_pull_request`:
+- `owner`: `thomascortebeeck-kidsnovel`
+- `repo`: `trader`
+- `base`: `claude/ai-trading-bot-system-magkk`
+- `head`: the current session branch (run `git rev-parse --abbrev-ref HEAD`)
+- `title`: same as the commit message
+
+If the MCP tool isn't available in this session, flag it in your summary and stop — the push already succeeded, a human can merge the session branch manually.
