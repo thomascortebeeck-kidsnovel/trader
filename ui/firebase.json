@@ -8,6 +8,13 @@
     ],
     "frameworksBackend": {
       "region": "europe-west1",
+      "env": {
+        "GITHUB_REPO_OWNER": "thomascortebeeck-kidsnovel",
+        "GITHUB_REPO_NAME": "trader",
+        "GITHUB_REPO_BRANCH": "claude/ai-trading-bot-system-magkk",
+        "ALPACA_BASE_URL": "https://paper-api.alpaca.markets",
+        "ALPACA_DATA_URL": "https://data.alpaca.markets"
+      },
       "secrets": [
         "GENERAL_ALPACA_API_KEY",
         "GENERAL_ALPACA_SECRET_KEY",
