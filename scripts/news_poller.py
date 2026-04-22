@@ -171,6 +171,57 @@ def load_watchlist(path: pathlib.Path) -> list[str]:
     return tickers
 
 
+def fetch_alpaca_positions() -> list[str]:
+    """Return symbols of currently-open positions on the news-based account.
+
+    Used to augment the static watchlist so the poller always follows
+    whatever the bot currently holds, even if the operator hasn't edited
+    watchlist.md. Fails open (returns []) on any HTTP/network error —
+    the static list is the source of truth, this is a bonus.
+    """
+    base = os.environ.get("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+    url = f"{base}/v2/positions"
+    result = _get_json(url, headers=_alpaca_headers())
+    if not isinstance(result, list):
+        return []
+    return [str(p.get("symbol", "")).upper() for p in result if p.get("symbol")]
+
+
+def fetch_recent_trade_symbols(days: int = 5) -> list[str]:
+    """Parse bots/news-based/memory/trade-log.md for symbols traded in the
+    last N calendar days. Gives news coverage for positions we closed
+    recently — an earnings miss or guidance cut on a just-exited name is
+    still actionable (rule #2's earnings-day rule + layer-2 direction
+    tagging handle the rest). Fails open on parse errors.
+    """
+    path = pathlib.Path("bots/news-based/memory/trade-log.md")
+    if not path.exists():
+        return []
+    cutoff = dt.date.today() - dt.timedelta(days=days)
+    symbols: set[str] = set()
+    try:
+        for line in path.read_text().splitlines():
+            line = line.strip()
+            if not line.startswith("|") or line.startswith("|--"):
+                continue
+            cells = [c.strip() for c in line.split("|")]
+            # Expected columns: | timestamp | symbol | side | qty | price | ...
+            if len(cells) < 4:
+                continue
+            ts_str, sym = cells[1], cells[2]
+            if ts_str.lower() in ("timestamp", ""):
+                continue
+            try:
+                ts_date = dt.datetime.fromisoformat(ts_str.split("T")[0]).date()
+            except ValueError:
+                continue
+            if ts_date >= cutoff and re.match(r"^[A-Z]{1,5}$", sym):
+                symbols.add(sym)
+    except OSError:
+        return []
+    return sorted(symbols)
+
+
 def domain_from_url(url: str) -> str:
     try:
         host = urllib.parse.urlparse(url).netloc.lower()
@@ -211,7 +262,7 @@ def fetch_alpaca_news(symbols: list[str], lookback_min: int) -> list[dict]:
 
 
 def fetch_finnhub_news(category: str) -> list[dict]:
-    """Fetch recent Finnhub news for a category (general, forex)."""
+    """Fetch recent Finnhub news for a category (general, forex, merger)."""
     api_key = _env("FINNHUB_API_KEY")
     params = {"category": category, "token": api_key}
     result = _get_json(f"{FINNHUB_HOST}/api/v1/news", params=params)
@@ -312,16 +363,31 @@ def main() -> int:
 
     state = load_state(state_file)
     fired_ids: set[str] = set(state.get("fired_ids", []))
-    watchlist = load_watchlist(watchlist_file)
+    static_watchlist = load_watchlist(watchlist_file)
+    position_symbols = fetch_alpaca_positions()
+    recent_trade_symbols = fetch_recent_trade_symbols(days=5)
+
+    # Union: operator's curated list + current holdings + recently-traded
+    # names. Static list is the durable thesis universe; the other two
+    # make the poller automatically follow whatever the bot is actively
+    # involved with, so exit-day news still gets evaluated.
+    watchlist = sorted(
+        set(static_watchlist) | set(position_symbols) | set(recent_trade_symbols)
+    )
     watchlist_set = set(watchlist)
+    dynamic_adds = sorted(set(watchlist) - set(static_watchlist))
 
     surviving: list[str] = []
     new_ids: list[str] = []
 
     print(
         f"[{now_et.strftime('%H:%M ET')}] Polling news — "
-        f"{len(watchlist)} watchlist tickers, lookback {lookback_min}min"
+        f"{len(watchlist)} tickers "
+        f"({len(static_watchlist)} static, {len(dynamic_adds)} dynamic), "
+        f"lookback {lookback_min}min"
     )
+    if dynamic_adds:
+        print(f"  Dynamic adds: {', '.join(dynamic_adds)}")
 
     # --- Micro stream (Alpaca News) ---
     alpaca_articles = fetch_alpaca_news(watchlist, lookback_min)
@@ -334,8 +400,8 @@ def main() -> int:
             fired_ids.add(article_id)
             print(f"  PASS (micro): {article.get('headline', '')[:80]}")
 
-    # --- Macro stream (Finnhub general + forex) ---
-    for category in ("general", "forex"):
+    # --- Macro stream (Finnhub general + forex + merger) ---
+    for category in ("general", "forex", "merger"):
         finnhub_articles = fetch_finnhub_news(category)
         print(f"  Finnhub/{category}: {len(finnhub_articles)} raw articles")
         for article in finnhub_articles:
