@@ -1,5 +1,6 @@
 // Server-only. Fetches bot memory markdown + recent commits for routine health.
 
+import { ApiError } from './api-errors';
 import type { BotSlug, RoutineRun } from './types';
 
 const OWNER = process.env.GITHUB_REPO_OWNER ?? 'thomascortebeeck-kidsnovel';
@@ -17,17 +18,26 @@ function ghHeaders(): HeadersInit {
   return h;
 }
 
-export async function fetchMemoryFile(slug: BotSlug, file: string): Promise<string> {
+export interface MemoryFetchResult {
+  // null = the file genuinely doesn't exist yet (fresh bot).
+  // string = file contents.
+  content: string | null;
+}
+
+export async function fetchMemoryFile(slug: BotSlug, file: string): Promise<MemoryFetchResult> {
   const url = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/bots/${slug}/memory/${file}`;
   const res = await fetch(url, {
     headers: ghHeaders(),
     next: { revalidate: 60 },
   });
-  if (res.status === 404) return '';
-  if (!res.ok) {
-    throw new Error(`GitHub raw fetch ${url} failed: ${res.status}`);
+  if (res.status === 404) return { content: null };
+  if (res.status === 401 || res.status === 403) {
+    throw new ApiError('upstream_auth', `GitHub raw fetch ${url} auth failed: ${res.status}`);
   }
-  return res.text();
+  if (!res.ok) {
+    throw new ApiError('upstream_down', `GitHub raw fetch ${url} failed: ${res.status}`);
+  }
+  return { content: await res.text() };
 }
 
 export async function fetchRoutineCommits(slug: BotSlug, limit = 20): Promise<RoutineRun[]> {
@@ -37,8 +47,11 @@ export async function fetchRoutineCommits(slug: BotSlug, limit = 20): Promise<Ro
     next: { revalidate: 60 },
   });
   if (res.status === 404 || res.status === 422) return [];
+  if (res.status === 401 || res.status === 403) {
+    throw new ApiError('upstream_auth', `GitHub commits fetch auth failed: ${res.status}`);
+  }
   if (!res.ok) {
-    throw new Error(`GitHub commits fetch failed: ${res.status}`);
+    throw new ApiError('upstream_down', `GitHub commits fetch failed: ${res.status}`);
   }
   const commits = (await res.json()) as Array<{
     sha: string;
