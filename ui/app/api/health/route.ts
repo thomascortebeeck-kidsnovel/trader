@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // Diagnostic endpoint. Reports WHICH env vars are present on the Cloud Run
 // revision serving this request. Never returns values — only presence and
@@ -33,7 +35,9 @@ const REQUIRED_KEYS = [
   'GITHUB_TOKEN',
 ] as const;
 
-export async function GET(): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
+  console.log(`[health] ${new Date().toISOString()} ${req.method} ${req.url} rev=${process.env.K_REVISION ?? '?'}`);
+
   const env: Record<string, { present: boolean; len: number }> = {};
   for (const k of REQUIRED_KEYS) {
     const v = process.env[k];
@@ -46,13 +50,16 @@ export async function GET(): Promise<Response> {
 
   const allPresent = REQUIRED_KEYS.every((k) => env[k].present && env[k].len > 0);
 
-  return NextResponse.json({
-    ok: allPresent,
-    cloudRun: {
-      service: kService ?? null,
-      revision: kRevision ?? null,
+  return NextResponse.json(
+    {
+      ok: allPresent,
+      cloudRun: {
+        service: kService ?? null,
+        revision: kRevision ?? null,
+      },
+      nodeEnv: nodeEnv ?? null,
+      env,
     },
-    nodeEnv: nodeEnv ?? null,
-    env,
-  });
+    { headers: { 'Cache-Control': 'no-store, max-age=0' } },
+  );
 }

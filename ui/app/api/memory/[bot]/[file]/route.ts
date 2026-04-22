@@ -23,6 +23,7 @@ export async function GET(
   ctx: { params: Promise<{ bot: string; file: string }> },
 ) {
   const { bot, file } = await ctx.params;
+  console.log(`[memory] bot=${bot} file=${file} mock=${USE_MOCK} rev=${process.env.K_REVISION ?? '?'}`);
   if (!isBotSlug(bot)) {
     return NextResponse.json({ error: 'unknown bot' }, { status: 404 });
   }
@@ -44,6 +45,7 @@ export async function GET(
     if (file === 'trade-log.md') return NextResponse.json(parseTradeLog(md));
     return new NextResponse(md, { headers: { 'Content-Type': 'text/markdown' } });
   } catch (err) {
+    console.error(`[memory] bot=${bot} file=${file} error:`, err);
     return NextResponse.json({ error: String(err) }, { status: 502 });
   }
 }
