@@ -2,6 +2,31 @@
 
 Append-only.
 
+## 2026-04-22 15:55 day-trader-kraken close-flatten
+
+**Saw:** `orders open` returned `[]`, `positions` returned `[]`. Account equity $100000.00, last_equity $100000.00 → day P&L +0.00%. No KRKNF trades in `trade-log.md` today (log is empty beyond header, consistent with the pre-market's mechanical SKIP). ITA snapshot: today's close 217.14 vs prev-day 222.865 = −2.57% on the benchmark (defense/aerospace continued yesterday's weakness).
+
+**Did:**
+- Confirmed no open KRKNF orders to cancel (pre-market plan was SKIP; 09:45 / 12:30 routines would have found the same blockers and placed nothing).
+- Confirmed no KRKNF position to close — already flat, no wait-for-fill needed.
+- Captured EOD snapshot: equity $100000.00, day P&L +0.00%, ITA −2.57%, bot vs bench +2.57%.
+- Appended 2026-04-22 row to `memory/benchmark.md`.
+- Sent [KRAKEN] EOD 2026-04-22 report to ClickUp via `scripts/notify.py` (report skill).
+- Reset `memory/pattern-cache.md` to the blank template — today's SKIP rationale, levels, and live-trade-state all cleared so tomorrow's pre-market starts clean.
+
+**Why:** Close-flatten's job is to guarantee intraday-only discipline and leave clean state. The bot was structurally unable to trade today (KRKNF `inactive` on Alpaca paper + OTC data blocked), so flattening was trivial — the real value is still logging the zero so next pre-market doesn't assume anything, and still shipping the EOD report so the operator sees day 2 of the same blockers in their ClickUp feed. Not editing `pattern-research.md` — that's the weekly-review's job.
+
+**Watch:** Tomorrow's (2026-04-23) pre-market should open by re-probing `GET /v2/assets/KRKNF` and the IEX/SIP/OTC bar endpoints. If the `inactive` + OTC-403 combo persists for a 3rd consecutive day, the journal should escalate from "recommend the operator action or pause the cron" to an explicit ask to pause the 09:45 / 12:30 / 15:55 ET routines entirely until a broker/data decision is made — each routine run against a dead symbol is ~3k tokens of overhead. ITA's two-day slide (−3.49% then −2.57%) suggests defense-sector weakness may extend; once KRKNF is routable again, bias the first sessions toward short-side ORB / VWAP-reject rather than long breakouts.
+
+## Reported to ClickUp
+
+[KRAKEN] EOD 2026-04-22
+Equity: $100000.00 (today: +0.00%)
+Trades: 0 (0 winners, 0 losers)  Total R: 0R
+Best: none   Worst: none
+Plan today: SKIP (infra blockers: KRKNF inactive on Alpaca + no OTC bar data)   Adhered: yes
+Notes: day 2 of identical blockers; ITA -2.57% so standing aside beat bench by +2.57%.
+
 ## 2026-04-22 08:15 day-trader-kraken pre-market (for 2026-04-22 session)
 
 **Saw:** Account clean — $100k equity, $100k cash, zero positions, `trading_blocked=false`. Both blockers from yesterday's pre-market persist unchanged:
