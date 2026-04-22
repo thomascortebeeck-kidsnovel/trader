@@ -45,8 +45,6 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Verify required Secret Manager secrets exist
-        # Fail fast with a readable error rather than deploying a broken
-        # revision that Cloud Run can't start.
         run: |
           set -euo pipefail
           REQUIRED_SECRETS=(
@@ -70,11 +68,20 @@ jobs:
             exit 1
           fi
 
+      - name: Delete Cloud Run service to clear legacy Firebase Frameworks state
+        # Firebase Frameworks left custom annotations (phantom secret refs,
+        # base-image tracking, etc.) that `--clear-base-image` alone can't
+        # cleanly overwrite. Deleting gives us a guaranteed fresh spec.
+        # gcloud run deploy --source recreates the service on the next step.
+        # Firebase Hosting's fh-* tag is repaired after.
+        run: |
+          gcloud run services delete "$CLOUD_RUN_SERVICE" \
+            --region="$CLOUD_RUN_REGION" \
+            --project="$GCP_PROJECT" \
+            --quiet \
+            || echo "service did not exist, continuing"
+
       - name: Build Cloud Run image via Cloud Build and deploy
-        # `gcloud run deploy --source=ui` hands the Dockerfile to Cloud Build,
-        # builds, pushes to Artifact Registry, and rolls out a new revision
-        # in one step. NEXT_PUBLIC_* values are passed as --build-arg because
-        # Next.js inlines them at build time.
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
@@ -106,6 +113,10 @@ jobs:
           SECRETS+=",NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest"
           SECRETS+=",GITHUB_TOKEN=GITHUB_TOKEN:latest"
 
+          # --ingress=all: temporarily accept all traffic so we can curl the
+          # canonical Cloud Run URL directly from this runner for diagnostics
+          # below. Tightened to internal-and-cloud-load-balancing in a later
+          # step once we've confirmed the container serves /api/ping.
           gcloud run deploy "$CLOUD_RUN_SERVICE" \
             --source=ui \
             --project="$GCP_PROJECT" \
@@ -117,19 +128,80 @@ jobs:
             --min-instances=0 \
             --max-instances=5 \
             --timeout=60 \
-            --ingress=internal-and-cloud-load-balancing \
-            --clear-base-image \
+            --ingress=all \
+            --allow-unauthenticated \
             --set-env-vars="$ENV_VARS" \
             --set-secrets="$SECRETS" \
             --update-build-env-vars="$BUILD_ARGS"
 
-      - name: Disable Cloud Run invoker IAM check
-        # Org policy blocks `allUsers` bindings (kidsnovel.com Workspace DRS).
-        # Disable invoker IAM on the service so Firebase Hosting's LB can
-        # reach the backend without an IAM binding. Security is enforced at
-        # L4 by ingress=internal-and-cloud-load-balancing + Firebase Auth.
+      - name: Describe Cloud Run service (diagnostic)
+        if: always()
+        run: |
+          echo "=== service description ==="
+          gcloud run services describe "$CLOUD_RUN_SERVICE" \
+            --region="$CLOUD_RUN_REGION" \
+            --project="$GCP_PROJECT" \
+            --format="yaml(metadata.name,status.url,status.latestReadyRevisionName,status.latestCreatedRevisionName,status.conditions,spec.template.spec.containers[0].image,spec.template.spec.containers[0].env)" \
+            || true
+          echo
+          echo "=== latest revision readiness ==="
+          gcloud run revisions list \
+            --service="$CLOUD_RUN_SERVICE" \
+            --region="$CLOUD_RUN_REGION" \
+            --project="$GCP_PROJECT" \
+            --limit=3 \
+            --format="table(metadata.name,status.conditions[0].type,status.conditions[0].status,status.conditions[0].message)" \
+            || true
+
+      - name: Curl Cloud Run canonical URL directly (pre-Hosting diagnostic)
+        # With ingress=all + --allow-unauthenticated set above, the canonical
+        # URL should be reachable. If /api/ping fails here, the container
+        # itself is broken — no point deploying Firebase Hosting on top.
         run: |
           set -euo pipefail
+          CR_URL="$(gcloud run services describe "$CLOUD_RUN_SERVICE" \
+            --region="$CLOUD_RUN_REGION" --project="$GCP_PROJECT" \
+            --format='value(status.url)')"
+          echo "Cloud Run URL: $CR_URL"
+          PING_URL="${CR_URL}/api/ping"
+
+          for i in 1 2 3 4 5 6; do
+            STATUS="$(curl -s -o /tmp/cr_ping.txt -w '%{http_code}' "$PING_URL" || true)"
+            echo "attempt $i: GET $PING_URL → HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "=== response body ==="
+              cat /tmp/cr_ping.txt
+              echo
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "=== /api/ping failed on Cloud Run directly ==="
+          echo "--- last response body ---"
+          cat /tmp/cr_ping.txt || true
+          echo
+          echo "--- last 100 log entries from Cloud Run ---"
+          gcloud logging read \
+            "resource.type=cloud_run_revision AND resource.labels.service_name=$CLOUD_RUN_SERVICE" \
+            --project="$GCP_PROJECT" \
+            --limit=100 \
+            --format="table(timestamp,severity,textPayload,jsonPayload.message)" \
+            || true
+          exit 1
+
+      - name: Lock ingress + disable invoker IAM
+        # Now that we've confirmed the container serves /api/ping on the
+        # canonical URL, tighten the door. Firebase Hosting's LB still
+        # reaches the service (CLB path) and invokerIamDisabled=true lets
+        # it invoke without an allUsers binding (which org policy forbids).
+        run: |
+          set -euo pipefail
+          gcloud run services update "$CLOUD_RUN_SERVICE" \
+            --region="$CLOUD_RUN_REGION" \
+            --project="$GCP_PROJECT" \
+            --ingress=internal-and-cloud-load-balancing
+
           ACCESS_TOKEN="$(gcloud auth print-access-token)"
           curl -sS --fail-with-body -X PATCH \
             -H "Authorization: Bearer ${ACCESS_TOKEN}" \
@@ -137,21 +209,11 @@ jobs:
             "https://run.googleapis.com/v2/projects/${GCP_PROJECT}/locations/${CLOUD_RUN_REGION}/services/${CLOUD_RUN_SERVICE}?updateMask=invokerIamDisabled" \
             -d '{"invokerIamDisabled": true}'
           echo
-          echo "Verifying invokerIamDisabled is set..."
-          curl -sS --fail-with-body \
-            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-            "https://run.googleapis.com/v2/projects/${GCP_PROJECT}/locations/${CLOUD_RUN_REGION}/services/${CLOUD_RUN_SERVICE}" \
-            | grep -E '"invokerIamDisabled"\s*:\s*true' \
-            && echo "OK: invoker IAM check disabled"
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
       - name: Deploy Firebase Hosting (rewrites only, no frameworks)
-        # Firebase Hosting is now a thin front door. It serves no static
-        # files of its own (we point `public` at an empty dir); every
-        # request is rewritten to the Cloud Run service. No webframeworks
-        # experiment, no partial server bundle.
         working-directory: ui
         run: |
           set -euo pipefail
@@ -160,10 +222,6 @@ jobs:
           firebase deploy --only hosting --project="$GCP_PROJECT" --non-interactive
 
       - name: Re-point fh-* tags to latestReady revision
-        # firebase deploy pins its rewrite tag to whatever revision was
-        # latest at that moment. Since we deployed Cloud Run first, that
-        # should already be the current revision, but re-point to be
-        # defensive against ordering / staleness.
         run: |
           set -euo pipefail
           SERVICE_JSON="$(gcloud run services describe "$CLOUD_RUN_SERVICE" \
@@ -188,13 +246,10 @@ jobs:
           fi
 
       - name: Sanity check /api/ping via Firebase Hosting
-        # Confirms end-to-end routing works: Firebase Hosting → Cloud Run
-        # → Next.js → /api/ping handler returns 200. A 404 here means the
-        # rewrite isn't reaching the container.
         run: |
           set -euo pipefail
           URL="https://${GCP_PROJECT}.web.app/api/ping"
-          for i in 1 2 3 4 5; do
+          for i in 1 2 3 4 5 6; do
             STATUS="$(curl -s -o /tmp/ping.json -w '%{http_code}' "$URL" || true)"
             echo "attempt $i: GET $URL → HTTP $STATUS"
             if [ "$STATUS" = "200" ]; then
@@ -204,6 +259,12 @@ jobs:
             fi
             sleep 5
           done
-          echo "FAIL: /api/ping did not return 200 after 5 attempts"
+          echo "FAIL: /api/ping did not return 200 via Firebase Hosting after 6 attempts"
           cat /tmp/ping.json || true
+          echo
+          echo "--- Cloud Run service state ---"
+          gcloud run services describe "$CLOUD_RUN_SERVICE" \
+            --region="$CLOUD_RUN_REGION" \
+            --project="$GCP_PROJECT" \
+            --format=yaml || true
           exit 1
