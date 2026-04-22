@@ -2,6 +2,16 @@
 
 Append-only.
 
+## 2026-04-22 close-flatten (supplemental re-run)
+
+**Saw:** Cron fired a second close-flatten invocation for 2026-04-22 (session branch `claude/gracious-maxwell-AzFmN`). Canonical run already committed at `13980aa` earlier today — journal entry, `benchmark.md` row, ClickUp report, and `pattern-cache.md` reset all in place. Re-probed live state: `orders open` → `[]`, `positions` → `[]`, `account` equity $100000.00 / last_equity $100000.00 (day P&L +0.00%, unchanged since the canonical run). `trade-log.md` still has 0 rows for 2026-04-22.
+
+**Did:** Nothing that would duplicate the canonical run — no second benchmark row, no second ClickUp notification, no re-reset of an already-blank pattern-cache. Only this supplemental note to leave an honest audit trail that a second close-flatten fire landed on already-flat, already-journaled state.
+
+**Why:** Idempotency. `benchmark.md` is the authoritative EOD timeseries — duplicating the 2026-04-22 row would corrupt the 7d/30d/90d outperformance math the benchmark skill computes. Re-sending the ClickUp message would be noise on the operator's phone. Routine rules say "write before you exit," so this note is the minimum honest write.
+
+**Watch:** If two close-flatten runs per day becomes a pattern, the scheduler is double-firing the cron for `day-trader-kraken`. Worth the operator confirming the cron config for `50 15 * * 1-5` isn't duplicated across environments — the downstream risk is silent duplicate-writes in a future session that isn't careful enough to check git log first.
+
 ## 2026-04-22 15:55 day-trader-kraken close-flatten
 
 **Saw:** `orders open` returned `[]`, `positions` returned `[]`. Account equity $100000.00, last_equity $100000.00 → day P&L +0.00%. No KRKNF trades in `trade-log.md` today (log is empty beyond header, consistent with the pre-market's mechanical SKIP). ITA snapshot: today's close 217.14 vs prev-day 222.865 = −2.57% on the benchmark (defense/aerospace continued yesterday's weakness).
