@@ -128,6 +128,7 @@ def _post_trigger(url: str, token: str, text: str) -> bool:
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
+            "anthropic-beta": "experimental-cc-routine-2026-04-01",
         },
         method="POST",
     )
