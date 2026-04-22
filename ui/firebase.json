@@ -1,17 +1,14 @@
 {
   "hosting": {
-    "source": ".",
+    "public": "public-fh",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
     ],
-    "frameworksBackend": {
-      "region": "europe-west1"
-    },
     "rewrites": [
       {
-        "source": "/api/**",
+        "source": "**",
         "run": {
           "serviceId": "ssrtraderdashboardtc01",
           "region": "europe-west1"
