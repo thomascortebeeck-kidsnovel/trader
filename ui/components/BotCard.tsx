@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import type { BotMeta } from '@/lib/types';
-import type { AlpacaAccount, BenchmarkRow, BotHealth, RoutineRun } from '@/lib/types';
+import type {
+  AlpacaAccount,
+  AlpacaPosition,
+  BenchmarkRow,
+  BotHealth,
+  RoutineRun,
+} from '@/lib/types';
+import { formatPct, formatSignedUSD, formatUSD } from '@/lib/format';
 import { Sparkline } from './Sparkline';
 
 interface Props {
@@ -13,6 +20,8 @@ interface Props {
         history: BenchmarkRow[];
         routines: RoutineRun[];
         health: BotHealth;
+        positions?: AlpacaPosition[];
+        tradesToday?: number;
       }
     | undefined;
   spyHistory?: BenchmarkRow[];
@@ -45,6 +54,7 @@ export function BotCard({ bot, state, spyHistory }: Props) {
   const eq = state?.account?.equity ?? 0;
   const last = state?.account?.last_equity ?? 0;
   const todayPct = last > 0 ? ((eq - last) / last) * 100 : 0;
+  const todayDollar = eq - last;
 
   const hist = state?.history ?? [];
   const series = hist.map((r) => r.equity);
@@ -71,8 +81,13 @@ export function BotCard({ bot, state, spyHistory }: Props) {
   const latestRoutine = state?.routines?.[0];
   const healthMeta = HEALTH_META[state?.health ?? 'unknown'];
 
+  const positions = state?.positions ?? [];
+  const openCount = positions.length;
+  const openPL = positions.reduce((sum, p) => sum + (p.unrealized_pl ?? 0), 0);
+  const tradesToday = state?.tradesToday ?? 0;
+
   return (
-    <Link href={`/${bot.slug}`} className="block panel p-4 hover:border-blue-500 transition-colors">
+    <Link href={`/${bot.slug}`} className="block panel panel-hover p-4">
       <div className="flex items-baseline justify-between">
         <div className="font-semibold flex items-center gap-2">
           <span
@@ -84,34 +99,57 @@ export function BotCard({ bot, state, spyHistory }: Props) {
             {healthMeta.label}
           </span>
         </div>
-        <div className="num text-right">
-          ${eq.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+        <div className="text-right">
+          <div className="num text-lg leading-tight">{formatUSD(eq)}</div>
+          <div className={`num text-xs leading-tight ${todayPct >= 0 ? 'text-up' : 'text-down'}`}>
+            {formatPct(todayPct)} · {formatSignedUSD(todayDollar)}
+          </div>
         </div>
       </div>
-      <div className="flex gap-4 mt-1 text-xs flex-wrap">
-        <span className={`num ${todayPct >= 0 ? 'text-up' : 'text-down'}`}>
-          {todayPct >= 0 ? '+' : ''}
-          {todayPct.toFixed(2)}% today
-        </span>
+
+      <div className="flex gap-4 mt-2 text-[11px] flex-wrap">
         {vsBench !== null && (
           <span className={`num ${vsBench >= 0 ? 'text-up' : 'text-down'}`}>
-            {vsBench >= 0 ? '+' : ''}
-            {vsBench.toFixed(2)}% vs {bot.benchmarkLabel}
+            {formatPct(vsBench)} vs {bot.benchmarkLabel}
           </span>
         )}
         {showSpyStat && vsSpy !== null && (
           <span className={`num ${vsSpy >= 0 ? 'text-up' : 'text-down'}`}>
-            {vsSpy >= 0 ? '+' : ''}
-            {vsSpy.toFixed(2)}% vs SPY
+            {formatPct(vsSpy)} vs SPY
           </span>
         )}
       </div>
+
       {series.length > 0 && (
         <div className="mt-3">
           <Sparkline values={series} />
         </div>
       )}
-      <div className="flex items-center justify-between mt-2 text-[11px] text-muted">
+
+      <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-border text-[11px]">
+        <div>
+          <div className="stat-label">Positions</div>
+          <div className="num mt-0.5">{openCount}</div>
+        </div>
+        <div>
+          <div className="stat-label">Open P/L</div>
+          <div
+            className={`num mt-0.5 ${
+              openCount === 0 ? 'text-muted' : openPL >= 0 ? 'text-up' : 'text-down'
+            }`}
+          >
+            {openCount === 0 ? '—' : formatSignedUSD(openPL, 2)}
+          </div>
+        </div>
+        <div>
+          <div className="stat-label">Trades today</div>
+          <div className={`num mt-0.5 ${tradesToday > 0 ? '' : 'text-muted'}`}>
+            {tradesToday}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mt-3 text-[11px] text-muted">
         <span>
           {latestRoutine
             ? `last: ${latestRoutine.routine} · ${formatRelative(latestRoutine.lastRunISO)}`

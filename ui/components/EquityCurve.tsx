@@ -48,12 +48,13 @@ export function EquityCurve({ rows, benchmarkLabel, spyRows, height = 260 }: Pro
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-        <CartesianGrid stroke="#1f2a33" strokeDasharray="3 3" />
+        <CartesianGrid stroke="#1f2a33" strokeOpacity={0.5} strokeDasharray="3 3" />
         <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 10 }} minTickGap={40} />
         <YAxis
           tick={{ fill: '#94a3b8', fontSize: 10 }}
           domain={['dataMin - 1', 'dataMax + 1']}
-          tickFormatter={(v) => v.toFixed(0)}
+          tickFormatter={(v) => `${v.toFixed(0)}`}
+          width={40}
         />
         <Tooltip
           contentStyle={{ background: '#141a20', border: '1px solid #1f2a33', fontSize: 12 }}
@@ -65,7 +66,7 @@ export function EquityCurve({ rows, benchmarkLabel, spyRows, height = 260 }: Pro
           dataKey="bot"
           stroke="#3b82f6"
           dot={false}
-          strokeWidth={1.7}
+          strokeWidth={2}
           isAnimationActive={false}
         />
         <Line
