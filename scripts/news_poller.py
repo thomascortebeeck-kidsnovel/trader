@@ -51,6 +51,7 @@ PRE_MARKET_START = dt.time(7, 0)
 
 TIER1_DOMAINS: frozenset[str] = frozenset(
     {
+        # Primary tier-1 wires + official sources
         "reuters.com",
         "wsj.com",
         "ft.com",
@@ -63,6 +64,19 @@ TIER1_DOMAINS: frozenset[str] = frozenset(
         "fdic.gov",
         "whitehouse.gov",
         "treasury.gov",
+        # Dow Jones properties + reputable financial press — added after
+        # observing 105 articles/poll with 0 survivors on a strict list.
+        # These are still editorially serious; layer-2 in the routine
+        # applies importance scoring and direction tagging on top.
+        "cnbc.com",
+        "marketwatch.com",
+        "barrons.com",
+        "nytimes.com",
+        "washingtonpost.com",
+        "economist.com",
+        "businessinsider.com",
+        "benzinga.com",
+        "finance.yahoo.com",
     }
 )
 
