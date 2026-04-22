@@ -158,7 +158,7 @@ def fetch_bars(symbol: str, limit: int = 40) -> list[dict]:
     data_host = _env("ALPACA_DATA_URL", DATA_HOST)
     url = f"{data_host}/v2/stocks/{symbol}/bars"
     result = _get(url, params)
-    raw = result.get("bars", [])
+    raw = result.get("bars") or []
     return [
         {
             "t": b["t"],
