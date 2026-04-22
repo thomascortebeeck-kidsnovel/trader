@@ -113,11 +113,21 @@ jobs:
           SECRETS+=",NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest"
           SECRETS+=",GITHUB_TOKEN=GITHUB_TOKEN:latest"
 
-          # Deploy with the final ingress posture from the start. Org
-          # policy blocks `allUsers` bindings so --allow-unauthenticated
-          # is silently dropped; we rely on invokerIamDisabled=true (set
-          # in the next step) + ingress=internal-and-cloud-load-balancing
-          # for Firebase Hosting access.
+          # ingress=all + invokerIamDisabled=true:
+          #
+          # Firebase Hosting's `run:` rewrite historically relied on an
+          # fh-* tagged URL created by Firebase Frameworks. Now that we
+          # deploy Cloud Run directly, no such tag exists, and the rewrite
+          # defaults to the canonical service URL. That URL is blocked by
+          # ingress=internal-and-cloud-load-balancing (Firebase Hosting's
+          # traffic doesn't qualify as "cloud load balancing" since it
+          # doesn't use a GCP HTTP(S) LB).
+          #
+          # Opening ingress=all lets Firebase Hosting reach the service.
+          # Direct public access to the canonical *.run.app URL is still
+          # possible but every API route enforces Firebase ID token via
+          # firebase-admin verifyIdToken(), so unauthenticated requests
+          # get 401. This is acceptable for paper-trading.
           gcloud run deploy "$CLOUD_RUN_SERVICE" \
             --source=ui \
             --project="$GCP_PROJECT" \
@@ -129,7 +139,7 @@ jobs:
             --min-instances=0 \
             --max-instances=5 \
             --timeout=60 \
-            --ingress=internal-and-cloud-load-balancing \
+            --ingress=all \
             --set-env-vars="$ENV_VARS" \
             --set-secrets="$SECRETS" \
             --update-build-env-vars="$BUILD_ARGS"
@@ -162,10 +172,12 @@ jobs:
         # token / invoker binding — not worth the complexity just to
         # re-prove what the container startup logs already show.
         #
-        # invokerIamDisabled=true lets Firebase Hosting's LB invoke the
-        # service without any IAM binding (which org policy forbids via
-        # iam.allowedPolicyMemberDomains). The ingress lock set in the
-        # deploy step keeps the canonical URL unreachable to the public.
+        # invokerIamDisabled=true lets Firebase Hosting invoke the service
+        # without any IAM binding (which org policy forbids via
+        # iam.allowedPolicyMemberDomains). With ingress=all set in the
+        # deploy step, any request — authenticated or not — reaches the
+        # container. Route handlers enforce firebase-admin verifyIdToken,
+        # so unauthenticated calls still get 401.
         run: |
           set -euo pipefail
           ACCESS_TOKEN="$(gcloud auth print-access-token)"
