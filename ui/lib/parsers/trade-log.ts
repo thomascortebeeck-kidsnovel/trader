@@ -63,3 +63,20 @@ export function parseTradeLogDetailed(md: string): TradeLogParseResult {
   }
   return { rows, errors };
 }
+
+// Filter trade rows whose `timestamp` falls on the given America/New_York date
+// (yyyy-mm-dd). trade-log timestamps are ISO strings without explicit TZ —
+// compare in ET to keep day boundaries aligned with market sessions across DST.
+export function filterRowsByET(rows: TradeRow[], isoDateET: string): TradeRow[] {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  return rows.filter((r) => {
+    const t = new Date(r.timestamp);
+    if (isNaN(t.getTime())) return false;
+    return fmt.format(t) === isoDateET;
+  });
+}

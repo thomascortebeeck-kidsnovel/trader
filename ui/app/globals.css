@@ -10,12 +10,21 @@ html, body {
 
 @layer components {
   .panel {
-    @apply bg-panel border border-border rounded-lg;
+    @apply bg-panel border border-border rounded-lg shadow-card;
+  }
+  .panel-hover {
+    @apply transition-all hover:border-accent/60 hover:shadow-cardHover;
+  }
+  .hero-card {
+    @apply bg-hero border border-borderStrong rounded-lg shadow-card;
   }
   .stat-label {
     @apply text-[11px] uppercase tracking-wider text-muted;
   }
   .num {
     @apply font-mono tabular-nums;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider;
   }
 }

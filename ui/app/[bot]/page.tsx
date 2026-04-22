@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BOTS, isBotSlug } from '@/lib/bots';
 import type {
@@ -12,7 +11,9 @@ import type {
   TradeRow,
 } from '@/lib/types';
 import { authFetchJSON } from '@/lib/auth-fetch';
+import { formatPct, formatSignedUSD, formatUSD } from '@/lib/format';
 import { EquityCurve } from '@/components/EquityCurve';
+import { NavHeader } from '@/components/NavHeader';
 import { PositionsTable } from '@/components/PositionsTable';
 import { TradesTable } from '@/components/TradesTable';
 import { ErrorBanner, type BannerItem } from '@/components/ErrorBanner';
@@ -94,29 +95,51 @@ export default function BotDetail({ params }: { params: Promise<{ bot: string }>
 
   const eq = account?.equity ?? 0;
   const lastEq = account?.last_equity ?? 0;
-  const todayPct = lastEq > 0 ? ((eq - lastEq) / lastEq) * 100 : 0;
+  const todayDollar = eq - lastEq;
+  const todayPct = lastEq > 0 ? (todayDollar / lastEq) * 100 : 0;
+  const openPL = positions.reduce((s, p) => s + (p.unrealized_pl ?? 0), 0);
 
   return (
-    <main className="max-w-3xl mx-auto p-4 space-y-4">
-      <div>
-        <Link href="/" className="text-xs text-muted hover:text-white">
-          ← dashboard
-        </Link>
-      </div>
-      <header className="pb-3 border-b border-border">
-        <h1 className="text-xl font-semibold">{bot.label}</h1>
-        <div className="flex items-baseline gap-4 mt-1">
-          <span className="num text-lg">
-            {loaded ? `$${eq.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}
-          </span>
-          {loaded && (
-            <span className={`num text-sm ${todayPct >= 0 ? 'text-up' : 'text-down'}`}>
-              {todayPct >= 0 ? '+' : ''}
-              {todayPct.toFixed(2)}%
-            </span>
-          )}
-          <span className="text-xs text-muted">vs {bot.benchmarkLabel}</span>
+    <main className="max-w-5xl mx-auto p-4 space-y-4">
+      <NavHeader />
+
+      <header className="panel p-4">
+        <div className="flex items-baseline justify-between flex-wrap gap-3">
+          <div>
+            <div className="stat-label">{bot.benchmarkLabel} benchmark</div>
+            <h1 className="text-xl font-semibold mt-0.5">{bot.label}</h1>
+          </div>
+          <div className="text-right">
+            <div className="num text-2xl">{loaded ? formatUSD(eq) : '—'}</div>
+            {loaded && (
+              <div className={`num text-xs ${todayPct >= 0 ? 'text-up' : 'text-down'}`}>
+                {formatPct(todayPct)} · {formatSignedUSD(todayDollar)} today
+              </div>
+            )}
+          </div>
         </div>
+        {loaded && (
+          <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-border text-xs">
+            <div>
+              <div className="stat-label">Cash</div>
+              <div className="num mt-0.5">{formatUSD(account?.cash ?? 0)}</div>
+            </div>
+            <div>
+              <div className="stat-label">Positions · Open P/L</div>
+              <div
+                className={`num mt-0.5 ${
+                  positions.length === 0 ? 'text-muted' : openPL >= 0 ? 'text-up' : 'text-down'
+                }`}
+              >
+                {positions.length} · {positions.length === 0 ? '—' : formatSignedUSD(openPL, 2)}
+              </div>
+            </div>
+            <div>
+              <div className="stat-label">Day-trade count</div>
+              <div className="num mt-0.5">{account?.daytrade_count ?? 0}</div>
+            </div>
+          </div>
+        )}
       </header>
 
       {errors.length > 0 && <ErrorBanner items={errors} />}
