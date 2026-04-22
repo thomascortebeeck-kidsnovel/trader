@@ -106,10 +106,12 @@ Paste the UTC cron into claude.ai/code. The claude.ai timezone selector doesn't 
 |10 | `kraken / close-flatten`     | `day-trader-kraken`    | `50 15 * * 1-5`        | `50 19 * * 1-5`            | [`bots/day-trader-kraken/routines/close-flatten.md`](../bots/day-trader-kraken/routines/close-flatten.md) |
 |11 | `kraken / weekly-review`     | `day-trader-kraken`    | `30 16 * * 5`          | `30 20 * * 5`              | [`bots/day-trader-kraken/routines/weekly-review.md`](../bots/day-trader-kraken/routines/weekly-review.md) |
 |12 | `news / pre-market-news`     | `news-based`           | `30 7 * * 1-5`         | `30 11 * * 1-5`            | [`bots/news-based/routines/pre-market-news.md`](../bots/news-based/routines/pre-market-news.md) |
-|13 | `news / micro-scan`          | `news-based`           | `*/30 9-15 * * 1-5`    | `*/30 13-19 * * 1-5`       | [`bots/news-based/routines/micro-scan.md`](../bots/news-based/routines/micro-scan.md) |
+|13 | `news / micro-scan`          | `news-based`           | `0 9-15 * * 1-5` †     | `0 13-19 * * 1-5` †        | [`bots/news-based/routines/micro-scan.md`](../bots/news-based/routines/micro-scan.md) |
 |14 | `news / macro-scan`          | `news-based`           | `15 9-15/1 * * 1-5`    | `15 13-19/1 * * 1-5`       | [`bots/news-based/routines/macro-scan.md`](../bots/news-based/routines/macro-scan.md) |
 |15 | `news / eod`                 | `news-based`           | `15 16 * * 1-5`        | `15 20 * * 1-5`            | [`bots/news-based/routines/eod.md`](../bots/news-based/routines/eod.md) |
 |16 | `news / weekly-review`       | `news-based`           | `0 17 * * 5`           | `0 21 * * 5`               | [`bots/news-based/routines/weekly-review.md`](../bots/news-based/routines/weekly-review.md) |
+
+† `news / micro-scan` was originally `*/30 9-15 * * 1-5` (every 30 min). claude.ai/code routines enforce a **1-hour minimum** between scheduled runs, so half-hour crons are rejected. We fall back to hourly. If you want sub-hour reaction to breaking news, add an API trigger to the routine (claude.ai/code → routine → Add trigger → API) and post to it from an external news poller — see `docs/routine-setup-guide.md` for the pattern.
 
 **Tip (mobile):** tap a prompt file link → tap the "raw" or "⋯ → raw" button → long-press to select all → copy → go back to the routine page → paste.
 

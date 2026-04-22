@@ -140,12 +140,18 @@ jobs:
           # Verify the latest revision is actually serving 100% traffic. If
           # it isn't, the container failed to start (most likely cause:
           # IAM can't access one of the secrets).
+          #
+          # Cloud Run's status.traffic is a list — we want the entry with
+          # percent=100 (the main production route), not status.traffic[0]
+          # which can be a Firebase Hosting named-tag route at 0%. jq
+          # filters reliably to the right entry.
           LATEST_READY_REV="$(gcloud run services describe ssrtraderdashboardtc01 \
             --region=europe-west1 \
             --format='value(status.latestReadyRevisionName)')"
           TRAFFIC_REV="$(gcloud run services describe ssrtraderdashboardtc01 \
             --region=europe-west1 \
-            --format='value(status.traffic[0].revisionName)')"
+            --format=json \
+            | jq -r 'first(.status.traffic[] | select(.percent == 100) | .revisionName)')"
           echo "latestReadyRevision=${LATEST_READY_REV}"
           echo "trafficRevision=${TRAFFIC_REV}"
           if [ "${LATEST_READY_REV}" != "${TRAFFIC_REV}" ]; then
