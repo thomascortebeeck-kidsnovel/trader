@@ -1,5 +1,11 @@
 name: Deploy UI
 
+# Direct Cloud Run deploy of the Next.js app in ui/ via Cloud Build,
+# then a Firebase Hosting deploy that rewrites all traffic to the
+# Cloud Run service. Previously we used Firebase Frameworks' webframeworks
+# experiment — it produced a partial server bundle that 404'd on every
+# /api/** and RSC path, so we bypass it entirely.
+
 on:
   push:
     branches:
@@ -17,24 +23,17 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  GCP_PROJECT: trader-dashboard-tc01
+  CLOUD_RUN_SERVICE: ssrtraderdashboardtc01
+  CLOUD_RUN_REGION: europe-west1
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ui
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: ui/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Authenticate to Google Cloud (Workload Identity Federation)
         uses: google-github-actions/auth@v2
@@ -45,55 +44,11 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Nuke Cloud Run service if it exists (one-time repair)
-        # The existing Cloud Run service has phantom UUID secret refs written
-        # by Firebase Frameworks that gcloud's client-side parser can't read,
-        # so every --update / --clear call crashes with 'Invalid secret path
-        # in annotation'. Deleting bypasses the parser entirely (the delete
-        # API call doesn't validate annotations on the way out). firebase
-        # deploy below then recreates the service clean, and the post-deploy
-        # step binds real secrets into the fresh spec.
-        #
-        # This step is safe to keep running even after repair — if the
-        # service is in a healthy state, delete + recreate costs ~30s of
-        # extra deploy time but produces identical output.
-        run: |
-          gcloud run services delete ssrtraderdashboardtc01 \
-            --region=europe-west1 \
-            --quiet || echo "service did not exist, continuing"
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-
-      - name: Enable webframeworks experiment
-        run: firebase experiments:enable webframeworks
-
-      - name: Deploy to Firebase Hosting
-        env:
-          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
-          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
-        run: firebase deploy --project=trader-dashboard-tc01 --non-interactive --force
-
-      - name: Bind runtime env vars + secrets on Cloud Run
-        # Firebase Frameworks' Next.js integration does not reliably honor
-        # frameworksBackend.env / .secrets in firebase.json — we bypass it
-        # entirely and configure runtime env directly on Cloud Run here.
-        # Runs against the freshly-recreated service, so no phantom refs
-        # exist and --set-secrets succeeds on the first call.
-        #
-        # We pre-verify every secret exists in Secret Manager. If one is
-        # missing, `gcloud run services update --set-secrets` accepts the
-        # spec but Cloud Run then fails to start the revision — traffic
-        # stays on the previous (empty-env) revision and the dashboard
-        # silently serves $0. Failing loud here surfaces the real problem.
+      - name: Verify required Secret Manager secrets exist
+        # Fail fast with a readable error rather than deploying a broken
+        # revision that Cloud Run can't start.
         run: |
           set -euo pipefail
-          PROJECT_ID=trader-dashboard-tc01
-
           REQUIRED_SECRETS=(
             GENERAL_ALPACA_API_KEY
             GENERAL_ALPACA_SECRET_KEY
@@ -103,125 +58,151 @@ jobs:
             NEWS_ALPACA_SECRET_KEY
             GITHUB_TOKEN
           )
-
           missing=()
           for s in "${REQUIRED_SECRETS[@]}"; do
-            if ! gcloud secrets describe "$s" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+            if ! gcloud secrets describe "$s" --project="$GCP_PROJECT" >/dev/null 2>&1; then
               missing+=("$s")
             fi
           done
           if [ "${#missing[@]}" -gt 0 ]; then
-            echo "ERROR: the following Secret Manager secrets do not exist in ${PROJECT_ID}:"
+            echo "ERROR: the following Secret Manager secrets do not exist in $GCP_PROJECT:"
             printf '  - %s\n' "${missing[@]}"
-            echo
-            echo "Create them first. Example:"
-            echo "  printf 'PKxxxx...' | gcloud secrets create GENERAL_ALPACA_API_KEY --project=${PROJECT_ID} --data-file=-"
-            echo
-            echo "Or, if they exist in another project, grant this project's Cloud Run"
-            echo "service account roles/secretmanager.secretAccessor on each secret."
             exit 1
           fi
 
-          gcloud run services update ssrtraderdashboardtc01 \
-            --region=europe-west1 \
-            --update-env-vars="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel,GITHUB_REPO_NAME=trader,GITHUB_REPO_BRANCH=main,ALPACA_BASE_URL=https://paper-api.alpaca.markets,ALPACA_DATA_URL=https://data.alpaca.markets" \
-            --set-secrets="GENERAL_ALPACA_API_KEY=GENERAL_ALPACA_API_KEY:latest,GENERAL_ALPACA_SECRET_KEY=GENERAL_ALPACA_SECRET_KEY:latest,KRAKEN_ALPACA_API_KEY=KRAKEN_ALPACA_API_KEY:latest,KRAKEN_ALPACA_SECRET_KEY=KRAKEN_ALPACA_SECRET_KEY:latest,NEWS_ALPACA_API_KEY=NEWS_ALPACA_API_KEY:latest,NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest"
-
-          # firebase deploy creates the initial revision with an explicit
-          # traffic pin (traffic[0].revisionName=<initial>, percent=100)
-          # instead of the "latest revision" auto-promote mode. As a
-          # result, the new revision we just built with --set-secrets is
-          # Ready but doesn't actually serve traffic — the old, empty-env
-          # revision does. Explicitly promote latest to 100%.
-          #
-          # NOTE: earlier versions of this workflow ALSO tried to rewrite
-          # the Firebase Hosting named tag (fh-*) to the new revision so
-          # Hosting's rewrites would hit secrets-carrying code. That
-          # approach is obsolete — firebase.json now has an explicit
-          # /api/** rewrite that routes directly to the service canonical
-          # URL (bypassing any tag), and page routes are served from
-          # Firebase Hosting's static CDN cache (never hit Cloud Run).
-          # The tag can drift without breaking anything.
-          gcloud run services update-traffic ssrtraderdashboardtc01 \
-            --region=europe-west1 \
-            --to-latest
-
-          # Verify the latest revision is actually serving 100% traffic. If
-          # it isn't, the container failed to start (most likely cause:
-          # IAM can't access one of the secrets).
-          #
-          # Cloud Run's status.traffic is a list — we want the entry with
-          # percent=100 (the main production route), not status.traffic[0]
-          # which can be a Firebase Hosting named-tag route at 0%. jq
-          # filters reliably to the right entry.
-          LATEST_READY_REV="$(gcloud run services describe ssrtraderdashboardtc01 \
-            --region=europe-west1 \
-            --format='value(status.latestReadyRevisionName)')"
-          TRAFFIC_REV="$(gcloud run services describe ssrtraderdashboardtc01 \
-            --region=europe-west1 \
-            --format=json \
-            | jq -r 'first(.status.traffic[] | select(.percent == 100) | .revisionName)')"
-          echo "latestReadyRevision=${LATEST_READY_REV}"
-          echo "trafficRevision=${TRAFFIC_REV}"
-          if [ "${LATEST_READY_REV}" != "${TRAFFIC_REV}" ]; then
-            echo "ERROR: latest ready revision is not serving traffic — new revision likely crashed on startup."
-            echo "Grant roles/secretmanager.secretAccessor to the Cloud Run runtime SA on each secret, or check revision logs."
-            exit 1
-          fi
-
-      - name: Allow Firebase Hosting to invoke Cloud Run (no-IAM-check mode)
-        # Background: the usual `firebase deploy` binding is
-        # allUsers -> roles/run.invoker, which this project's org policy
-        # `iam.allowedPolicyMemberDomains` (kidsnovel.com Workspace)
-        # refuses because allUsers is outside the allowed domain.
-        #
-        # Previous attempt: bind run.invoker to the Firebase Hosting P4SA
-        # `service-PROJECT_NUMBER@gcp-sa-firebasehosting.iam.gserviceaccount.com`.
-        # That P4SA cannot be provisioned in this project — the Service
-        # Usage `generateServiceIdentity` endpoint returns
-        # IAM_SERVICE_NOT_CONFIGURED_FOR_IDENTITIES for
-        # firebasehosting.googleapis.com. Binding a role to an SA that
-        # doesn't exist fails with INVALID_ARGUMENT.
-        #
-        # Current approach (Google's recommended workaround for DRS-
-        # enforced projects): disable the Cloud Run invoker IAM check on
-        # the service itself. With ingress locked to
-        # internal-and-cloud-load-balancing, security is enforced at L4:
-        #  - Direct hits to the *.run.app URL fail at the network gate.
-        #  - Firebase Hosting's managed load balancer reaches the
-        #    service and, because invoker IAM is disabled, the request
-        #    is served.
-        # No IAM binding is created, so the org policy never evaluates.
-        #
-        # Implemented via the Cloud Run v2 REST API (no `beta` gcloud
-        # component needed on setup-gcloud@v2).
+      - name: Build Cloud Run image via Cloud Build and deploy
+        # `gcloud run deploy --source=ui` hands the Dockerfile to Cloud Build,
+        # builds, pushes to Artifact Registry, and rolls out a new revision
+        # in one step. NEXT_PUBLIC_* values are passed as --build-arg because
+        # Next.js inlines them at build time.
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
         run: |
           set -euo pipefail
-          PROJECT_ID=trader-dashboard-tc01
-          REGION=europe-west1
-          SERVICE=ssrtraderdashboardtc01
 
-          gcloud run services update "${SERVICE}" \
-            --region="${REGION}" \
-            --ingress=internal-and-cloud-load-balancing
+          BUILD_ARGS="NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}"
+          BUILD_ARGS+=",NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}"
+          BUILD_ARGS+=",NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID}"
+          BUILD_ARGS+=",NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}"
+          BUILD_ARGS+=",NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}"
+          BUILD_ARGS+=",NEXT_PUBLIC_FIREBASE_APP_ID=${NEXT_PUBLIC_FIREBASE_APP_ID}"
 
+          ENV_VARS="GITHUB_REPO_OWNER=thomascortebeeck-kidsnovel"
+          ENV_VARS+=",GITHUB_REPO_NAME=trader"
+          ENV_VARS+=",GITHUB_REPO_BRANCH=main"
+          ENV_VARS+=",ALPACA_BASE_URL=https://paper-api.alpaca.markets"
+          ENV_VARS+=",ALPACA_DATA_URL=https://data.alpaca.markets"
+
+          SECRETS="GENERAL_ALPACA_API_KEY=GENERAL_ALPACA_API_KEY:latest"
+          SECRETS+=",GENERAL_ALPACA_SECRET_KEY=GENERAL_ALPACA_SECRET_KEY:latest"
+          SECRETS+=",KRAKEN_ALPACA_API_KEY=KRAKEN_ALPACA_API_KEY:latest"
+          SECRETS+=",KRAKEN_ALPACA_SECRET_KEY=KRAKEN_ALPACA_SECRET_KEY:latest"
+          SECRETS+=",NEWS_ALPACA_API_KEY=NEWS_ALPACA_API_KEY:latest"
+          SECRETS+=",NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest"
+          SECRETS+=",GITHUB_TOKEN=GITHUB_TOKEN:latest"
+
+          gcloud run deploy "$CLOUD_RUN_SERVICE" \
+            --source=ui \
+            --project="$GCP_PROJECT" \
+            --region="$CLOUD_RUN_REGION" \
+            --platform=managed \
+            --port=8080 \
+            --cpu=1 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=5 \
+            --timeout=60 \
+            --ingress=internal-and-cloud-load-balancing \
+            --set-env-vars="$ENV_VARS" \
+            --set-secrets="$SECRETS" \
+            --update-build-env-vars="$BUILD_ARGS"
+
+      - name: Disable Cloud Run invoker IAM check
+        # Org policy blocks `allUsers` bindings (kidsnovel.com Workspace DRS).
+        # Disable invoker IAM on the service so Firebase Hosting's LB can
+        # reach the backend without an IAM binding. Security is enforced at
+        # L4 by ingress=internal-and-cloud-load-balancing + Firebase Auth.
+        run: |
+          set -euo pipefail
           ACCESS_TOKEN="$(gcloud auth print-access-token)"
           curl -sS --fail-with-body -X PATCH \
             -H "Authorization: Bearer ${ACCESS_TOKEN}" \
             -H "Content-Type: application/json" \
-            "https://run.googleapis.com/v2/projects/${PROJECT_ID}/locations/${REGION}/services/${SERVICE}?updateMask=invokerIamDisabled" \
+            "https://run.googleapis.com/v2/projects/${GCP_PROJECT}/locations/${CLOUD_RUN_REGION}/services/${CLOUD_RUN_SERVICE}?updateMask=invokerIamDisabled" \
             -d '{"invokerIamDisabled": true}'
           echo
-
           echo "Verifying invokerIamDisabled is set..."
           curl -sS --fail-with-body \
             -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-            "https://run.googleapis.com/v2/projects/${PROJECT_ID}/locations/${REGION}/services/${SERVICE}" \
+            "https://run.googleapis.com/v2/projects/${GCP_PROJECT}/locations/${CLOUD_RUN_REGION}/services/${CLOUD_RUN_SERVICE}" \
             | grep -E '"invokerIamDisabled"\s*:\s*true' \
             && echo "OK: invoker IAM check disabled"
 
-      - name: Dump final Cloud Run env for sanity check
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy Firebase Hosting (rewrites only, no frameworks)
+        # Firebase Hosting is now a thin front door. It serves no static
+        # files of its own (we point `public` at an empty dir); every
+        # request is rewritten to the Cloud Run service. No webframeworks
+        # experiment, no partial server bundle.
+        working-directory: ui
         run: |
-          gcloud run services describe ssrtraderdashboardtc01 \
-            --region=europe-west1 \
-            --format="yaml(spec.template.spec.containers[0].env,spec.template.spec.containers[0].image)"
+          set -euo pipefail
+          mkdir -p public-fh
+          touch public-fh/.keep
+          firebase deploy --only hosting --project="$GCP_PROJECT" --non-interactive
+
+      - name: Re-point fh-* tags to latestReady revision
+        # firebase deploy pins its rewrite tag to whatever revision was
+        # latest at that moment. Since we deployed Cloud Run first, that
+        # should already be the current revision, but re-point to be
+        # defensive against ordering / staleness.
+        run: |
+          set -euo pipefail
+          SERVICE_JSON="$(gcloud run services describe "$CLOUD_RUN_SERVICE" \
+            --region="$CLOUD_RUN_REGION" --project="$GCP_PROJECT" --format=json)"
+          LATEST_REV="$(echo "$SERVICE_JSON" | jq -r '.status.latestReadyRevisionName')"
+          FH_TAGS="$(echo "$SERVICE_JSON" \
+            | jq -r '[.spec.traffic[]? | select(.tag != null and (.tag | startswith("fh-"))) | .tag] | join(",")')"
+          echo "latestRevision=${LATEST_REV}"
+          echo "firebaseHostingTags=${FH_TAGS:-<none>}"
+          if [ -n "$FH_TAGS" ]; then
+            UPDATE_TAGS=""
+            IFS=','
+            for tag in $FH_TAGS; do
+              [ -n "$UPDATE_TAGS" ] && UPDATE_TAGS="${UPDATE_TAGS},"
+              UPDATE_TAGS="${UPDATE_TAGS}${tag}=${LATEST_REV}"
+            done
+            unset IFS
+            gcloud run services update-traffic "$CLOUD_RUN_SERVICE" \
+              --region="$CLOUD_RUN_REGION" \
+              --project="$GCP_PROJECT" \
+              --update-tags="${UPDATE_TAGS}"
+          fi
+
+      - name: Sanity check /api/ping via Firebase Hosting
+        # Confirms end-to-end routing works: Firebase Hosting → Cloud Run
+        # → Next.js → /api/ping handler returns 200. A 404 here means the
+        # rewrite isn't reaching the container.
+        run: |
+          set -euo pipefail
+          URL="https://${GCP_PROJECT}.web.app/api/ping"
+          for i in 1 2 3 4 5; do
+            STATUS="$(curl -s -o /tmp/ping.json -w '%{http_code}' "$URL" || true)"
+            echo "attempt $i: GET $URL → HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              cat /tmp/ping.json
+              echo
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "FAIL: /api/ping did not return 200 after 5 attempts"
+          cat /tmp/ping.json || true
+          exit 1

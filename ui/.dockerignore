@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+firebase.json
+.firebase
+npm-debug.log
+.vscode
+.idea
