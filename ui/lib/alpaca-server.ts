@@ -2,10 +2,11 @@
 // Keys are read from server env vars (no NEXT_PUBLIC_ prefix), so they
 // never end up in the client bundle.
 //
-// TODO (before live trading): verify the Firebase ID token on every call
-// here. Use firebase-admin's verifyIdToken. For MVP (paper only, private
-// dashboard), the Firebase Auth gate on the client pages is our only guard.
+// ID-token verification happens in the API route handlers
+// (via requireAuthenticatedUser), not here, so this module stays
+// focused on Alpaca I/O.
 
+import { ApiError } from './api-errors';
 import { BOTS } from './bots';
 import type { AlpacaAccount, AlpacaPosition, BotSlug } from './types';
 
@@ -21,7 +22,12 @@ function keysForBot(slug: BotSlug): { key: string; secret: string } | null {
 
 async function alpacaGet<T>(slug: BotSlug, path: string): Promise<T> {
   const creds = keysForBot(slug);
-  if (!creds) throw new Error(`Alpaca keys missing for ${slug}`);
+  if (!creds) {
+    throw new ApiError(
+      'credentials_missing',
+      `Alpaca keys not set for ${slug} (need ${BOTS[slug].envPrefix}_ALPACA_API_KEY + _SECRET_KEY)`,
+    );
+  }
   const res = await fetch(`${BASE}${path}`, {
     headers: {
       'APCA-API-KEY-ID': creds.key,
@@ -29,8 +35,14 @@ async function alpacaGet<T>(slug: BotSlug, path: string): Promise<T> {
     },
     cache: 'no-store',
   });
+  if (res.status === 401 || res.status === 403) {
+    throw new ApiError(
+      'upstream_auth',
+      `Alpaca rejected credentials for ${slug}: ${res.status}`,
+    );
+  }
   if (!res.ok) {
-    throw new Error(`Alpaca ${path} failed: ${res.status} ${await res.text()}`);
+    throw new ApiError('upstream_down', `Alpaca ${path} failed: ${res.status}`);
   }
   return res.json() as Promise<T>;
 }

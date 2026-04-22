@@ -52,3 +52,16 @@ export interface RoutineRun {
   commitSha: string;
   success: boolean;
 }
+
+export interface ParseError {
+  line: number;
+  reason: string;
+}
+
+// Shape of /api/memory/{bot}/benchmark.md and /trade-log.md responses.
+export interface MemoryParseResponse<T> {
+  rows: T[];
+  errors: ParseError[];
+}
+
+export type BotHealth = 'ok' | 'stale' | 'warn' | 'credentials_missing' | 'unknown';
