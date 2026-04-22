@@ -113,10 +113,11 @@ jobs:
           SECRETS+=",NEWS_ALPACA_SECRET_KEY=NEWS_ALPACA_SECRET_KEY:latest"
           SECRETS+=",GITHUB_TOKEN=GITHUB_TOKEN:latest"
 
-          # --ingress=all: temporarily accept all traffic so we can curl the
-          # canonical Cloud Run URL directly from this runner for diagnostics
-          # below. Tightened to internal-and-cloud-load-balancing in a later
-          # step once we've confirmed the container serves /api/ping.
+          # Deploy with the final ingress posture from the start. Org
+          # policy blocks `allUsers` bindings so --allow-unauthenticated
+          # is silently dropped; we rely on invokerIamDisabled=true (set
+          # in the next step) + ingress=internal-and-cloud-load-balancing
+          # for Firebase Hosting access.
           gcloud run deploy "$CLOUD_RUN_SERVICE" \
             --source=ui \
             --project="$GCP_PROJECT" \
@@ -128,8 +129,7 @@ jobs:
             --min-instances=0 \
             --max-instances=5 \
             --timeout=60 \
-            --ingress=all \
-            --allow-unauthenticated \
+            --ingress=internal-and-cloud-load-balancing \
             --set-env-vars="$ENV_VARS" \
             --set-secrets="$SECRETS" \
             --update-build-env-vars="$BUILD_ARGS"
@@ -153,55 +153,21 @@ jobs:
             --format="table(metadata.name,status.conditions[0].type,status.conditions[0].status,status.conditions[0].message)" \
             || true
 
-      - name: Curl Cloud Run canonical URL directly (pre-Hosting diagnostic)
-        # With ingress=all + --allow-unauthenticated set above, the canonical
-        # URL should be reachable. If /api/ping fails here, the container
-        # itself is broken — no point deploying Firebase Hosting on top.
+      - name: Wait for revision ready + disable invoker IAM
+        # Cloud Run `gcloud run deploy --source` returns after the revision
+        # is serving, so the container has already started by the time we
+        # get here (startup logs in the previous step show "Next.js Ready").
+        # We skip the direct-URL test because org policy blocks allUsers,
+        # which means we can't curl the canonical URL without an identity
+        # token / invoker binding — not worth the complexity just to
+        # re-prove what the container startup logs already show.
+        #
+        # invokerIamDisabled=true lets Firebase Hosting's LB invoke the
+        # service without any IAM binding (which org policy forbids via
+        # iam.allowedPolicyMemberDomains). The ingress lock set in the
+        # deploy step keeps the canonical URL unreachable to the public.
         run: |
           set -euo pipefail
-          CR_URL="$(gcloud run services describe "$CLOUD_RUN_SERVICE" \
-            --region="$CLOUD_RUN_REGION" --project="$GCP_PROJECT" \
-            --format='value(status.url)')"
-          echo "Cloud Run URL: $CR_URL"
-          PING_URL="${CR_URL}/api/ping"
-
-          for i in 1 2 3 4 5 6; do
-            STATUS="$(curl -s -o /tmp/cr_ping.txt -w '%{http_code}' "$PING_URL" || true)"
-            echo "attempt $i: GET $PING_URL → HTTP $STATUS"
-            if [ "$STATUS" = "200" ]; then
-              echo "=== response body ==="
-              cat /tmp/cr_ping.txt
-              echo
-              exit 0
-            fi
-            sleep 5
-          done
-
-          echo "=== /api/ping failed on Cloud Run directly ==="
-          echo "--- last response body ---"
-          cat /tmp/cr_ping.txt || true
-          echo
-          echo "--- last 100 log entries from Cloud Run ---"
-          gcloud logging read \
-            "resource.type=cloud_run_revision AND resource.labels.service_name=$CLOUD_RUN_SERVICE" \
-            --project="$GCP_PROJECT" \
-            --limit=100 \
-            --format="table(timestamp,severity,textPayload,jsonPayload.message)" \
-            || true
-          exit 1
-
-      - name: Lock ingress + disable invoker IAM
-        # Now that we've confirmed the container serves /api/ping on the
-        # canonical URL, tighten the door. Firebase Hosting's LB still
-        # reaches the service (CLB path) and invokerIamDisabled=true lets
-        # it invoke without an allUsers binding (which org policy forbids).
-        run: |
-          set -euo pipefail
-          gcloud run services update "$CLOUD_RUN_SERVICE" \
-            --region="$CLOUD_RUN_REGION" \
-            --project="$GCP_PROJECT" \
-            --ingress=internal-and-cloud-load-balancing
-
           ACCESS_TOKEN="$(gcloud auth print-access-token)"
           curl -sS --fail-with-body -X PATCH \
             -H "Authorization: Bearer ${ACCESS_TOKEN}" \
@@ -209,6 +175,12 @@ jobs:
             "https://run.googleapis.com/v2/projects/${GCP_PROJECT}/locations/${CLOUD_RUN_REGION}/services/${CLOUD_RUN_SERVICE}?updateMask=invokerIamDisabled" \
             -d '{"invokerIamDisabled": true}'
           echo
+          echo "Verifying invokerIamDisabled is set..."
+          curl -sS --fail-with-body \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            "https://run.googleapis.com/v2/projects/${GCP_PROJECT}/locations/${CLOUD_RUN_REGION}/services/${CLOUD_RUN_SERVICE}" \
+            | grep -E '"invokerIamDisabled"\s*:\s*true' \
+            && echo "OK: invoker IAM check disabled"
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
@@ -260,11 +232,20 @@ jobs:
             sleep 5
           done
           echo "FAIL: /api/ping did not return 200 via Firebase Hosting after 6 attempts"
+          echo "--- last response body ---"
           cat /tmp/ping.json || true
           echo
-          echo "--- Cloud Run service state ---"
+          echo "--- Cloud Run service traffic routing ---"
           gcloud run services describe "$CLOUD_RUN_SERVICE" \
             --region="$CLOUD_RUN_REGION" \
             --project="$GCP_PROJECT" \
-            --format=yaml || true
+            --format="yaml(status.url,status.latestReadyRevisionName,spec.traffic,status.traffic)" || true
+          echo
+          echo "--- last 50 log entries from Cloud Run ---"
+          gcloud logging read \
+            "resource.type=cloud_run_revision AND resource.labels.service_name=$CLOUD_RUN_SERVICE" \
+            --project="$GCP_PROJECT" \
+            --limit=50 \
+            --format="table(timestamp,severity,textPayload)" \
+            || true
           exit 1
