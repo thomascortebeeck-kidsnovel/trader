@@ -118,6 +118,7 @@ jobs:
             --max-instances=5 \
             --timeout=60 \
             --ingress=internal-and-cloud-load-balancing \
+            --clear-base-image \
             --set-env-vars="$ENV_VARS" \
             --set-secrets="$SECRETS" \
             --update-build-env-vars="$BUILD_ARGS"
