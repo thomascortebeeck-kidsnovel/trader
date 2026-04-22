@@ -137,6 +137,48 @@ jobs:
             --region=europe-west1 \
             --to-latest
 
+          # CRITICAL: Firebase Hosting doesn't rewrite to the Cloud Run
+          # service's canonical URL — it rewrites to a tagged URL of the
+          # form  https://fh-<hash>---<service>.run.app, where the tag
+          # was pinned at `firebase deploy` time to the revision that
+          # existed then (i.e. the pre-secrets revision 00001). The
+          # --to-latest step above only moves DEFAULT traffic to the new
+          # revision; tagged URLs still route to whatever revision they
+          # were originally pinned to.
+          #
+          # Without re-pointing the tag, every dashboard request reaches
+          # the old revision that has neither env vars nor the latest
+          # code (e.g. /api/health returns 404 because the route didn't
+          # exist in that build, and Alpaca calls return 401 because no
+          # credentials are mounted).
+          #
+          # Fix: after --set-secrets creates the new revision and
+          # --to-latest promotes it, rewrite every fh-* tag to point at
+          # the new latest revision so Firebase Hosting's rewrites reach
+          # the secret-carrying, up-to-date container.
+          SERVICE_JSON="$(gcloud run services describe ssrtraderdashboardtc01 \
+            --region=europe-west1 --format=json)"
+          LATEST_REV="$(echo "$SERVICE_JSON" | jq -r '.status.latestReadyRevisionName')"
+          FH_TAGS="$(echo "$SERVICE_JSON" \
+            | jq -r '[.spec.traffic[]? | select(.tag != null and (.tag | startswith("fh-"))) | .tag] | join(",")')"
+          echo "latestRevision=${LATEST_REV}"
+          echo "firebaseHostingTags=${FH_TAGS:-<none>}"
+          if [ -n "$FH_TAGS" ]; then
+            UPDATE_TAGS=""
+            IFS=','
+            for tag in $FH_TAGS; do
+              [ -n "$UPDATE_TAGS" ] && UPDATE_TAGS="${UPDATE_TAGS},"
+              UPDATE_TAGS="${UPDATE_TAGS}${tag}=${LATEST_REV}"
+            done
+            unset IFS
+            echo "Re-pointing Firebase Hosting tags: ${UPDATE_TAGS}"
+            gcloud run services update-traffic ssrtraderdashboardtc01 \
+              --region=europe-west1 \
+              --update-tags="${UPDATE_TAGS}"
+          else
+            echo "No fh-* tags found; skipping tag re-point. If this is unexpected, firebase deploy may have used the canonical URL."
+          fi
+
           # Verify the latest revision is actually serving 100% traffic. If
           # it isn't, the container failed to start (most likely cause:
           # IAM can't access one of the secrets).
