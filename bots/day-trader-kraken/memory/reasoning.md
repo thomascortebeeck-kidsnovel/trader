@@ -27,6 +27,24 @@ Best: none   Worst: none
 Plan today: SKIP (infra blockers: KRKNF inactive on Alpaca + no OTC bar data)   Adhered: yes
 Notes: day 2 of identical blockers; ITA -2.57% so standing aside beat bench by +2.57%.
 
+## 2026-04-22 14:43 day-trader-kraken intraday-event
+
+**Saw:** Routine fired by intraday poller but **no event payload** is present in my initial context — no `event_type`, no ORH/ORL, no VWAP cross price, no spike volume, no milestone. Checked current state: account flat ($100k equity, last_equity $100k, day P&L +0.00%, trading_blocked=false), zero positions, zero open orders, trade-log empty for today. `pattern-cache.md` is in the blank/reset template (not plan=SKIP literally, but no setup either) — that's the state close-flatten's reset step leaves behind. Noted a second anomaly: the reasoning log already contains a "2026-04-22 15:55 close-flatten" entry above this one, but current ET time is 14:43 — meaning that close-flatten entry was written prematurely, before its scheduled 15:55 ET time. Pre-market earlier today set plan=**SKIP** (day 2 of the same two infra blockers: `GET /v2/assets/KRKNF` returns `status=inactive`; `iex`/`sip` 5Min bars return null, `otc` feed returns 403 "subscription does not permit").
+
+**Did:**
+- Did not attempt a trade. Step 2 of the routine (SKIP → journal and exit) applies on both literal and spiritual grounds: (a) reset cache = no cached setup, and (b) pre-market's documented plan was SKIP. Even setting aside the plan, the two blockers still prevent both detection (no bars) and execution (symbol inactive on paper).
+- Did not run `bars KRKNF 5Min 10` or any event-specific branch — no event_type was provided and OTC bars are still unavailable, so the probe would burn tokens for the same null result we've seen for two sessions.
+- Did not ClickUp-notify (routine says notify only on entry / stop adjustment / exit — none applied).
+- Did not append to `trade-log.md` (no trade placed or modified).
+- Appended this paragraph to `reasoning.md` between the (prematurely-written) close-flatten entry and this morning's pre-market entry, to preserve reverse-chronological order.
+
+**Why:** Two independent no-trade triggers and one "can't even evaluate" trigger all point the same way: do nothing, document, exit. Executing the event branches against a dead symbol with a blank cache and no payload would be ~3k tokens of theater.
+
+**Watch:** Two concrete upstream bugs for the operator to action:
+1. **Poller fired without an event payload.** `scripts/intraday_poller.py` should either (a) never fire if it can't attach `{event_type, details}`, or (b) attach a `NO_PAYLOAD` sentinel the routine can short-circuit on cleanly. Right now the routine's "read the event details" instruction has nothing to read.
+2. **Close-flatten ran / journaled before 15:55 ET.** The 2026-04-22 15:55 close-flatten entry exists in reasoning.md at 14:43 ET — either the cron is mistimed or the routine writes its journal before executing its cancel/flatten work. Worth checking `close-flatten.md` and the Actions schedule; a close-flatten that runs at 14:50 could cancel live intraday orders mid-session.
+Also still watching: KRKNF inactive/OTC-403 combo persists for a second session. If it's still there tomorrow (2026-04-23 pre-market), escalate the ask from "recommend pausing the cron" to "please pause until routing + OTC data are fixed or wire TSX KRKN via a Canadian broker."
+
 ## 2026-04-22 08:15 day-trader-kraken pre-market (for 2026-04-22 session)
 
 **Saw:** Account clean — $100k equity, $100k cash, zero positions, `trading_blocked=false`. Both blockers from yesterday's pre-market persist unchanged:
