@@ -1,9 +1,9 @@
 {
   "hosting": {
+    "site": "trader-dashboard-tc01",
     "public": "public-fh",
     "ignore": [
       "firebase.json",
-      "**/.*",
       "**/node_modules/**"
     ],
     "rewrites": [
