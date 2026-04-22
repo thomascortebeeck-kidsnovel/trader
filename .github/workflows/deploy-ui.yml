@@ -185,13 +185,32 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
+      - name: Diagnostic — list Firebase Hosting sites
+        # Confirms the default site (trader-dashboard-tc01) exists and isn't
+        # hiding behind a different site ID. Also reveals if Firebase
+        # Frameworks created a secondary site we're unaware of.
+        run: |
+          set -euo pipefail
+          firebase hosting:sites:list --project="$GCP_PROJECT" --json || true
+
       - name: Deploy Firebase Hosting (rewrites only, no frameworks)
+        # We use a marker file with a real (non-dot) name so that Firebase
+        # doesn't think the public dir is empty. The previous .keep was
+        # matched by "**/.*" in the ignore list, leaving deploy with 0 files.
+        # Rewrites still apply via the catch-all in firebase.json.
+        # --debug gives us a full deploy manifest on failure.
         working-directory: ui
         run: |
           set -euo pipefail
           mkdir -p public-fh
-          touch public-fh/.keep
-          firebase deploy --only hosting --project="$GCP_PROJECT" --non-interactive
+          echo "Firebase Hosting serving this file means the rewrite to Cloud Run failed." > public-fh/_rewrite-fallback.txt
+          firebase deploy --only hosting --project="$GCP_PROJECT" --non-interactive --debug 2>&1 | tail -200
+
+      - name: Diagnostic — list recent Hosting releases
+        run: |
+          set -euo pipefail
+          echo "=== Hosting channels ==="
+          firebase hosting:channel:list --project="$GCP_PROJECT" --json 2>&1 | tail -50 || true
 
       - name: Re-point fh-* tags to latestReady revision
         run: |
@@ -232,16 +251,23 @@ jobs:
             sleep 5
           done
           echo "FAIL: /api/ping did not return 200 via Firebase Hosting after 6 attempts"
-          echo "--- last response body ---"
-          cat /tmp/ping.json || true
           echo
-          echo "--- Cloud Run service traffic routing ---"
+          echo "=== Full response headers for /api/ping ==="
+          curl -sSi "$URL" | head -40 || true
+          echo
+          echo "=== Full response headers for / (root rewrite should also hit CR) ==="
+          curl -sSi "https://${GCP_PROJECT}.web.app/" | head -40 || true
+          echo
+          echo "=== Fallback file (if this is served, rewrite never applied) ==="
+          curl -sSi "https://${GCP_PROJECT}.web.app/_rewrite-fallback.txt" | head -20 || true
+          echo
+          echo "=== Cloud Run service traffic routing ==="
           gcloud run services describe "$CLOUD_RUN_SERVICE" \
             --region="$CLOUD_RUN_REGION" \
             --project="$GCP_PROJECT" \
             --format="yaml(status.url,status.latestReadyRevisionName,spec.traffic,status.traffic)" || true
           echo
-          echo "--- last 50 log entries from Cloud Run ---"
+          echo "=== last 50 log entries from Cloud Run ==="
           gcloud logging read \
             "resource.type=cloud_run_revision AND resource.labels.service_name=$CLOUD_RUN_SERVICE" \
             --project="$GCP_PROJECT" \
