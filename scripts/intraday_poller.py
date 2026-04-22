@@ -280,10 +280,10 @@ def main() -> int:
     avg_vol = session_avg_vol(bars)
     last_vol = last_bar["v"]
 
-    bar_time = last_bar["t"]
+    vwap_str = f"${current_vwap:.4f}" if current_vwap else "N/A"
     print(
         f"[{now_et.strftime('%H:%M ET')}] {symbol} last bar: "
-        f"close=${last_close:.4f} vol={last_vol:,} VWAP=${current_vwap:.4f if current_vwap else 'N/A'} "
+        f"close=${last_close:.4f} vol={last_vol:,} VWAP={vwap_str} "
         f"bars={len(bars)}"
     )
 
@@ -310,7 +310,7 @@ def main() -> int:
             f"OR avg 5-min volume: {or_avg_vol:,.0f}\n"
             f"Current price: ${last_close:.4f}\n"
             f"Current bar volume: {last_vol:,}\n"
-            f"VWAP: ${current_vwap:.4f if current_vwap else 'N/A'}\n\n"
+            f"VWAP: {vwap_str}\n\n"
             f"Opening Range is set. Check if the ORB setup from strategy.md and pattern-cache.md "
             f"is live: close > ORH with volume > 1.5x OR avg = long ORB; "
             f"close < ORL with same volume condition = short ORB. "
@@ -378,7 +378,7 @@ def main() -> int:
                 f"Session avg 5-min volume: {avg_vol:,.0f}\n"
                 f"Last bar OHLC: O=${last_bar['o']:.4f} H=${last_bar['h']:.4f} "
                 f"L=${last_bar['l']:.4f} C=${last_bar['c']:.4f}\n"
-                f"VWAP: ${current_vwap:.4f if current_vwap else 'N/A'}\n\n"
+                f"VWAP: {vwap_str}\n\n"
                 f"Volume spike detected. This may signal a breakout, reversal, or news catalyst. "
                 f"Check pattern-cache.md plan and current open patterns. "
                 f"Only act if a named pattern from strategy.md is forming."
