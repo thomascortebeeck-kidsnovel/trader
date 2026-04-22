@@ -70,3 +70,44 @@ _Still none from this routine._ Reason unchanged: no weekly-review sign-off, no 
 - **TQQQ / SQQQ / any leveraged ETF** — out of universe by strategy (rule: no leveraged ETFs). Reiterating because the AI-infra tape will tempt.
 
 **Next routine (market-open) should:** (1) read the post-hearing tape by 12:30 ET; (2) confirm AMZN pre-market open and first 5-min-bar close are within rule #3's 3% band and above its 50-day SMA; (3) confirm QQQ likewise; (4) if both pass, prefer QQQ first (ETF, lowest single-name risk for a cold-start book), then AMZN as the second half-size position only if it independently meets entry rules; (5) respect the 14:30 Waller 30-min avoidance window; (6) cap today's new positions at 2 given first-day-on-book risk, versus the strategy's weekly max of 3.
+
+## 2026-04-22 pre-market
+
+**Account state:** flat $100k paper book, 0 positions, 0 orders, balance_asof 2026-04-21. `buying_power` $200k (Reg-T 2x — strategy still forbids margin use). Trade-log empty; benchmark.md holds one row (2026-04-21). Weekly-review.md still empty — no operator-signed thesis, so default posture remains "broad-market with quality tilt" and the cold-start cap (first-fills day → 2 half-size positions) from yesterday's EOD carries into today.
+
+**Macro / calendar (all ET, from `scripts/finnhub.py economic`):**
+- **No FOMC, no CPI, no NFP today** — rule against trading the 30-min window around those prints does not apply.
+- 07:00 ET MBA 30-yr Mortgage Rate — actual 6.35% vs prev 6.42% (modest easing; incremental positive for housing / rate-sensitive).
+- 10:30 ET EIA Crude Oil Stocks Change (est −1.0M). After-hours API already printed a 4.47M draw vs 1.0M est — watch for a larger-than-expected official draw to amplify the Strait-of-Hormuz oil spike.
+- 13:30 ET ECB President Lagarde speech — EU-facing; US tape impact secondary, but can jostle USD/EUR and duration.
+- Overnight: UK inflation YoY 3.3% in line (3.3% est, 3.0% prev) — firmer UK CPI, marginal hawkish read for DM central banks. Non-trading for this bot but informs the tape.
+
+**Tape context:**
+- **Geopolitical whiplash is the defining feature of the pre-market.** Trump extended the Iran ceasefire overnight → S&P / Dow futures surged pre-market. Then by 10:44 UTC (06:44 ET) Iran's Revolutionary Guard attacked three ships in the Strait of Hormuz (one stranded on the Iranian coast, two fired upon/seized). Crude is at $90. Yardeni out calling "buy energy" into the ceasefire-runs-out-of-time setup. The ceasefire-extension and the ship-attack headlines are pointing in opposite directions; expect intraday chop on any further Iran headline.
+- **Chip / AI-infra tape is white hot.** SOXX is +27% in April (best month ever); SOXX + SMH posted record combined $5.45B inflows on the Hormuz ceasefire unlock. AMD "massive run" on AI demand; Micron surged Tuesday; Munster/Deepwater's +50% hyperscaler capex-2026 call still fresh. Detrick (Carson) explicitly called the QQQ 13-day surge a "new bull phase signal." This is the exact tape where rule #3 (no-chase >3% above pre-market open) will be easy to violate — discipline matters.
+- **AMZN stack still layering positives:** (a) GitLab announced deeper AWS integration (GitLab Duo Agent via Bedrock) after the close Tuesday — GitLab gapped up in AH; incremental AWS commercial proof-point; (b) the Anthropic "Mythos" Bloomberg headline is a two-sided read — product is live enough that third parties are trying to access it without authorization, but that also means there's an unauthorized-use / trust story to manage. Not deal-breaking for AMZN-long thesis, but worth noting. AMZN earnings confirmed April 30 — rule #2 still permits entry until 04/29 close.
+- **Political overhang — mild:** Trump flagged AAPL / AMZN are reportedly skipping tariff-refund claims to avoid angering him; says he'll "remember." Tariff-policy-through-coercion is a recurring tail but not a today-catalyst. Downgrades AAPL conviction further, marginally dampens AMZN without invalidating the thesis.
+- **Warsh hearing wrapped yesterday** with measured tone (rates depend on productivity signal from AI capex, Fed independence "means everything," will follow Supreme Court). Dovish-credible, not aggressively easing. Hearing is behind us; no repeat-of-headline avoidance window applies today.
+
+### BUY_CANDIDATES
+
+_Still none from the pre-market pass._ Reason: the same four gates apply (catalyst + above 50-day SMA + ≤3% above pre-market open + no earnings-day) and they can only be checked against the 09:30 ET open print by the market-open routine. The cold-start book also still has no weekly-review sign-off. Pre-market's job is research, not to prelist orders.
+
+### WATCH
+
+- **QQQ** — highest-conviction first-seed. 13-day surge narrative + chip-ETF record inflows + no FOMC/CPI/NFP today. Market-open should still half-size (2.5% equity) as the cold-start cap. Verify ≤3% above pre-market open and above 50-day SMA before entry.
+- **AMZN** — clean, layered catalysts (AWS-Anthropic $100B pact, GitLab/AWS integration, One Medical GLP-1, Mythos commercialization — net of unauthorized-use caveat). Earnings still April 30 (not today). Qualifies for half-size as the second position if it independently meets entry rules at the open. Tariff-refund political overhang is a minor negative, not a thesis-breaker.
+- **SPY** — viable alternative to QQQ if dispersion is high or operator wants broader tilt. Same entry discipline.
+- **NVDA / AVGO / TSM / SMH / SOXX** — AI-infra WATCH stays WATCH. Tape is too hot to chase; wait for pullback to 50-day. SOXX +27% MTD is exactly the "overheated" warning sign that rule #3 exists to protect against. No entries above-chase band.
+- **XRT** — lower-conviction WATCH carried from yesterday (March retail sales +1.7% still supportive); only relevant if operator wants discretionary-breadth tilt. Not a likely first fill.
+- **Energy (XLE, XOM, COP, CVX) — new soft WATCH.** Yardeni's buy-energy call + Strait-of-Hormuz ship attacks + crude at $90 + oil draw bigger than expected is a catalyst stack. But: strategy tilts quality not tactical-rotation, and entering energy on a geopolitical spike violates "don't chase" (rule #3) — leave as WATCH-only for intraday size-down consideration, not a primary entry vehicle. Demote if ceasefire stabilizes.
+
+### AVOID
+
+- **AAPL** — governance overhang (Cook → Ternus, Srouji) plus new Trump-tariff-refund pressure. Two unresolved non-fundamental drags; strategy demands a fundamental catalyst. Pass.
+- **USO / any oil-pure-play derivative** — directional geopolitical bet, not a fundamental catalyst. Out of persona.
+- **Leveraged ETFs (TQQQ / SQQQ / SOXL / any 2x/3x)** — out of universe by strategy. Reiterated because today's chip tape will tempt.
+- **Any position entered in the 30-min window around the 10:30 ET EIA crude print** — headline-driven whipsaw against the Iran tape. Medium-impact event, but paired with a live geopolitical catalyst its effective reactivity is elevated.
+- **Earnings-day names reporting today** — standard rule #2. No specific watchlist names are on today's reporter list (UNH / GE / MMM / ALK printed yesterday), but verify before any late-in-day entry.
+
+**Next routine (market-open) should:** (1) re-pull `alpaca account` and `positions` to confirm the book is still flat; (2) snapshot QQQ, AMZN, SPY pre-market prints and 09:30 ET opens + first 5-min bars, check rule #3 (≤3% band) and rule #4 (above 50-day SMA) on each; (3) avoid all entries in the 10:15–10:45 ET window around the EIA crude print given live Iran-tape reactivity; (4) prefer QQQ first half-size (~2.5% equity) if it qualifies, then AMZN half-size as the second position only if it independently qualifies, capped at 2 new positions today per the cold-start rule; (5) set 10% trailing stops on any fill via Alpaca and log every fill to trade-log.md; (6) if the Iran / Hormuz headline cycle escalates further pre-open, defer entries another session — the "when unsure, do nothing" tie-breaker beats anchoring day-one on a geopolitical gap.
