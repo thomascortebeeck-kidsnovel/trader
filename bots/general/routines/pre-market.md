@@ -28,6 +28,14 @@ API keys live in environment variables: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `
    - Deep pass only if cheap pass leaves a holding's thesis unclear: one Perplexity query, scoped to a specific name.
 4. Check today's economic calendar: `python scripts/finnhub.py economic` — note any FOMC / CPI / NFP release for the day so the market-open routine can avoid trading 30 min around it.
 5. Synthesize into BUY_CANDIDATES / WATCH / AVOID buckets and append to `memory/research-log.md` under today's date.
+
+   **Weekly-review gating (critical — read carefully):**
+   - Open `bots/general/memory/weekly-review.md` and find the most recent block.
+   - If that block is **empty** OR its `Valid through:` date is in the past → write `BUY_CANDIDATES = None` and keep everything as WATCH. Market-open will stay flat on purpose.
+   - If that block is **active** (dated for this week, signed off, Valid-through today or later) and lists permitted WATCH → BUY conversions → **promote those specific symbols into `BUY_CANDIDATES`** with their per-symbol role, sizing, and conditions from the weekly-review block, provided the name independently still qualifies on today's research (no new earnings-day blocker, no AVOID conflict, no fresh catalyst that invalidates the thesis).
+   - Names NOT explicitly permitted by the weekly-review stay in WATCH, regardless of how good the tape looks. The weekly-review is the only path from WATCH to BUY.
+   - If a name is permitted by the weekly-review but today's research shows a blocker (e.g. AMZN earnings date blackout, tripwire hit), write it in WATCH with a one-line reason for the demotion so market-open doesn't have to re-derive it.
+
 6. **Do not place orders.** This routine only researches.
 7. **Journal** via `skills/journal/SKILL.md`: dated block in `memory/reasoning.md` covering Saw / Did (= researched, didn't trade) / Why / Watch.
 8. Commit + push:
