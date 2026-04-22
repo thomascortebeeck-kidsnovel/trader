@@ -5,6 +5,13 @@
 # Built and deployed by .github/workflows/deploy-ui.yml via
 #   gcloud run deploy --source=ui
 # Cloud Build picks up this Dockerfile automatically.
+#
+# NEXT_PUBLIC_* values must be present at BUILD TIME (Next.js inlines
+# them into the client bundle). The deploy workflow writes them to
+# ui/.env.production before invoking gcloud — `next build` reads that
+# file automatically. Don't re-add ARG/ENV plumbing here; it's redundant
+# and was previously broken because gcloud's --update-build-env-vars
+# doesn't pass values as Docker --build-arg for Dockerfile builds.
 
 # -------- deps --------
 FROM node:22-alpine AS deps
@@ -17,22 +24,6 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# NEXT_PUBLIC_* env vars must be present at BUILD TIME (Next.js inlines
-# them into the client bundle). They're passed in as --build-arg by the
-# deploy workflow.
-ARG NEXT_PUBLIC_FIREBASE_API_KEY
-ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID
-ARG NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-ARG NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-ARG NEXT_PUBLIC_FIREBASE_APP_ID
-ENV NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY \
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID \
-    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=$NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET \
-    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID \
-    NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
 
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
