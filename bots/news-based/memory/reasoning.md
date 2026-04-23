@@ -20,3 +20,17 @@ Bench (SPY): +0.75% — bot vs bench: -0.75%
 Trades today: 0 (0W 0L 0BE)
 Best: — Worst: —
 Notes: First session — no pre-market signals on file, no entries. Watchlist + macro-themes review needed before tomorrow's open.
+
+## 2026-04-23 12:35 news-event
+
+**Saw:** Layer-1 filter delivered 1 item — `[MICRO] TSLA — "Tesla Is No Longer a Car Company — Q1 Proves It"` from **benzinga.com** (2026-04-23T16:30:44Z, ID 52007850). Summary: "Tesla stock has long priced in a future where it operates as an AI and robotics platform. Q1 suggests that future is arriving on schedule." Halt checks clean: equity $100,000 (day P/L +0.00%), no open positions, 0 trades today, no daily cap breach. Seen-headlines.md had no prior entry for this hash.
+**Did:**
+- Ran news-filter layer-2 scoring on the single item.
+- Source tier: **Tier 2** per `skills/news-filter/SKILL.md` §4 (Benzinga is explicitly listed as tier-2, alongside CNBC/Barron's/Seeking Alpha).
+- Importance: item references TSLA Q1 (earnings would be a 5), but the headline framing ("Is No Longer a Car Company — Q1 Proves It") and Benzinga "trading-ideas/movers" URL path indicate this is opinion/analysis built on top of a Q1 print rather than the primary earnings wire. Scored importance **3** (sector/thesis piece with catalyst attribution, not the primary 8-K).
+- Direction: LONG-leaning, but the catalyst is already priced by the time Benzinga publishes an opinion piece on it.
+- Filter verdict: **FAIL** on source tier (requires tier-1). Also borderline on importance. Strategy.md §34–42 is unambiguous: tier-1 AND importance ≥ 4 AND direction ≠ UNCLEAR. Any single failure = no trade.
+- Appended `52007850` hash to `seen-headlines.md` so this ID won't be re-evaluated if it recycles through the poller.
+- No order placed. No ClickUp notification (reserved for entries per routine §6).
+**Why:** The tier-1 cutoff exists precisely to stop the bot from front-running commentary that already reflects the primary catalyst. If the underlying TSLA Q1 print is real and tradeable, Reuters/Bloomberg/the 8-K will produce a tier-1 headline on the same catalyst — that's what we act on, not a Benzinga recap several hours later. CLAUDE.md hard rule: when unsure, do nothing and log.
+**Watch:** If a tier-1 TSLA Q1 headline lands in a later poll today, treat it as a fresh item (different URL → different hash) and re-score. The current TSLA Q1 narrative may justify an entry if confirmed by Reuters/Bloomberg with importance-5 framing (beat + raised guidance). Continue monitoring — but don't chase the Benzinga angle.
