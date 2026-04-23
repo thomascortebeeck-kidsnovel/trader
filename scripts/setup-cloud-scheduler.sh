@@ -50,7 +50,7 @@ upsert_job() {
       --time-zone="Etc/UTC" \
       --uri="$uri" \
       --http-method=POST \
-      --headers="$headers" \
+      --update-headers="$headers" \
       --message-body="$body" \
       --attempt-deadline=30s \
       --description="$description" \
