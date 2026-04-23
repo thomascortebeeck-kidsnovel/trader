@@ -20,3 +20,17 @@ Bench (SPY): +0.75% — bot vs bench: -0.75%
 Trades today: 0 (0W 0L 0BE)
 Best: — Worst: —
 Notes: First session — no pre-market signals on file, no entries. Watchlist + macro-themes review needed before tomorrow's open.
+
+## 2026-04-23 14:35 news-event
+
+**Saw:** One layer-1-passing item in the payload — `[MICRO] PLTR` Benzinga piece titled "Here's Why Palantir Stock Is Dropping 8% Despite A $300 Million Contract Win" (ID 52012707, 2026-04-23T18:31:59Z → 14:31 ET, intra-session). Summary pins the move on a risk-off tone, oil rebound, and defensive rotation rather than on the $300M contract win itself. Halt checks clean: equity $100,000.00 (day P/L +0.00%, far above the −1.5% cap), 0 open positions, 0 trades logged today (well under the 5/day cap). Hash not in `seen-headlines.md` — genuinely new.
+**Did:**
+- Ran the `news-filter` skill scoring:
+  - Source tier: **Tier 2** (Benzinga is explicitly tier-2 per `skills/news-filter/SKILL.md`). Poller's layer-1 passed it on domain whitelist but layer-2 rejects it.
+  - Importance: **3** at best — it's a price-explainer / commentary piece. The embedded fact (a $300M contract win) would typically score 4, but the article reframes it as already-priced-in and pivots the narrative to macro rotation. No new catalyst disclosed.
+  - Direction: **UNCLEAR** — contract-win content reads LONG, price-action framing reads SHORT, rationale given is sector rotation (macro, not PLTR-specific).
+- **Gate check:** fails on two of three criteria (source tier ≠ 1, direction = UNCLEAR). Skip — no trade.
+- Appended the URL sha256 to `seen-headlines.md` so the poller doesn't re-surface this item.
+- No ClickUp notification (routine only notifies on trades placed).
+**Why:** Strategy.md is explicit: importance ≥ 4 AND tier-1 AND direction != UNCLEAR, all three required. Benzinga doesn't clear the tier bar, and a "here's why the stock moved" explainer is exactly the kind of second-order commentary the filter is designed to block — trading off post-hoc rationalisations of an 8% drawdown adds exposure without informational edge. Per CLAUDE.md: when unsure, do nothing and log.
+**Watch:** If a tier-1 wire (Reuters/Bloomberg/WSJ) corroborates either (a) the $300M contract as a fresh disclosure or (b) a broader software-sector de-rating tied to a named catalyst, re-evaluate. Also worth noting for the weekly-review: the poller's layer-1 whitelist currently admits benzinga.com even though the filter routinely bins it as tier-2 — consider tightening the domain list to cut noise at the source.
