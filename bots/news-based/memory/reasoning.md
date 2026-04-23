@@ -20,3 +20,15 @@ Bench (SPY): +0.75% — bot vs bench: -0.75%
 Trades today: 0 (0W 0L 0BE)
 Best: — Worst: —
 Notes: First session — no pre-market signals on file, no entries. Watchlist + macro-themes review needed before tomorrow's open.
+
+## 2026-04-23 14:05 news-event
+
+**Saw:** One MICRO item delivered by the poller — TSLA, "Musk Bets On Intel's 14A Process; Tesla Stock Falls On Capex Plans", benzinga.com, 2026-04-23T18:02:54Z, ID 52011816. Summary field was effectively empty ("Iran Breakthrough" — a stray unrelated fragment from the source page, not a real summary). Not previously in `seen-headlines.md`. Account equity $100,000.00, day P/L +0.00% (no halt), 0 positions open, 0 trades booked today.
+**Did:**
+- Halt checks passed (equity flat, 0 of 5 daily trade slots used, no open positions to conflict with).
+- Scored the TSLA item under `skills/news-filter`: source tier = **2** (Benzinga is explicitly listed as tier-2 in the skill table), importance ≈ 2–3 (opinion/capex-plans piece, no new hard number or filing), direction leans SHORT but rests on a tier-2 opinion framing rather than a confirmed catalyst.
+- Hard filter is `importance ≥ 4 AND source_tier == 1 AND direction != UNCLEAR` → fails on source tier, so fails outright. **No trade placed.**
+- Appended the URL hash to `seen-headlines.md` so a repost from the same URL won't be re-evaluated.
+- No ClickUp notification (none required when nothing trades and nothing halts).
+**Why:** Strategy §"Don't act on" is explicit about tier-2 opinion pieces without a tier-1 catalyst on file. Benzinga alone isn't enough, and the "summary" being garbled increases the probability the poller over-matched on the watchlist symbol rather than on a real event. CLAUDE.md default: when unsure, do nothing and log.
+**Watch:** The layer-1 poller let a benzinga.com item through — worth confirming on the next weekly-review whether benzinga.com is actually in the poller's tier-1 domain allowlist (it shouldn't be, per the news-filter skill). If it is, the allowlist and the skill are out of sync and one of them should be fixed. Also: if a tier-1 source (Reuters/Bloomberg) publishes a confirming TSLA capex-cut story in the next session, the direction call (SHORT) may become tradeable then.
