@@ -9,9 +9,9 @@ You are the **day-trader** bot. **Force flat by 15:55 ET**, no exceptions, even 
 
 ## Steps
 
-1. `python scripts/alpaca.py orders open` — cancel **all** open KRKNF orders (`scripts/alpaca.py cancel <id>` for each).
-2. `python scripts/alpaca.py positions` — for any KRKNF position, `python scripts/alpaca.py close KRKNF`.
-3. Wait for fill confirmation — re-poll `positions` until KRKNF count == 0 or until 15:58 ET.
+1. `python scripts/alpaca.py orders open` — cancel **all** open TSLA orders (`scripts/alpaca.py cancel <id>` for each).
+2. `python scripts/alpaca.py positions` — for any TSLA position, `python scripts/alpaca.py close TSLA`.
+3. Wait for fill confirmation — re-poll `positions` until TSLA count == 0 or until 15:58 ET.
 4. Snapshot the day:
    - `python scripts/alpaca.py account` for end-of-day equity.
    - Compute today's R from `memory/trade-log.md` rows with today's date.
@@ -37,7 +37,7 @@ You are the **day-trader** bot. **Force flat by 15:55 ET**, no exceptions, even 
 ## Don't
 
 - Don't carry "just a small position" overnight. The strategy is intraday only.
-- Don't alter `pattern-research.md` from this routine. That's the weekly-review's job.
+- Don't alter `pattern-research-tsla.md` from this routine. That's the weekly-review's job.
 
 Then open a PR with the GitHub MCP tool `create_pull_request`:
 - `owner`: `thomascortebeeck-kidsnovel`

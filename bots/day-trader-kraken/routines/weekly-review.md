@@ -9,11 +9,11 @@ You are the **day-trader** bot. The week is done. Refresh the pattern research, 
 
 ## Steps
 
-1. Read everything in `bots/day-trader-kraken/memory/` and `bots/day-trader-kraken/pattern-research.md`.
+1. Read everything in `bots/day-trader-kraken/memory/` and `bots/day-trader-kraken/pattern-research-tsla.md`.
 2. Pull data:
-   - `python scripts/alpaca.py bars KRKNF 5Min 1500` (covers ~90 trading days of 5-min bars during US session; chunk if API caps you).
-   - `python scripts/alpaca.py bars KRKNF 1Day 90`.
-3. **Re-measure** and overwrite `pattern-research.md` sections:
+   - `python scripts/alpaca.py bars TSLA 5Min 1500` (covers ~90 trading days of 5-min bars during US session; chunk if API caps you).
+   - `python scripts/alpaca.py bars TSLA 1Day 90`.
+3. **Re-measure** and overwrite `pattern-research-tsla.md` sections:
    - ATR(14) on 5-min and daily.
    - Median + 75th-percentile OR(15) width.
    - Gap statistics (% > 1%, > 2%, > 3%) and gap-fill rate within 2 hrs.
@@ -25,8 +25,8 @@ You are the **day-trader** bot. The week is done. Refresh the pattern research, 
    - VWAP reclaim: same.
    - Bull/bear flag: same.
    - ABCD: same.
-   Write into `pattern-research.md` under "per-pattern expectancy".
-5. **Regime classification** — one paragraph at the top of `pattern-research.md`: trending / range-bound / chop, with the ADX number that justifies it. The next week's pre-market routine reads this first.
+   Write into `pattern-research-tsla.md` under "per-pattern expectancy".
+5. **Regime classification** — one paragraph at the top of `pattern-research-tsla.md`: trending / range-bound / chop, with the ADX number that justifies it. The next week's pre-market routine reads this first.
 6. Append a weekly block to `memory/weekly-review.md`:
    ```
    ## Week of YYYY-MM-DD
@@ -50,7 +50,7 @@ You are the **day-trader** bot. The week is done. Refresh the pattern research, 
 
 - Don't loosen the hard rules in `strategy.md`. Only the operator does that.
 - Don't graduate to live mode. Operator's call.
-- Don't overwrite the "Don't" sections in `pattern-research.md` — they're meant to survive the weekly refresh.
+- Don't overwrite the "Don't" sections in `pattern-research-tsla.md` — they're meant to survive the weekly refresh.
 
 Then open a PR with the GitHub MCP tool `create_pull_request`:
 - `owner`: `thomascortebeeck-kidsnovel`

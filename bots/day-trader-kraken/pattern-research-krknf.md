@@ -1,4 +1,6 @@
-# KRKNF — Pattern Research
+# KRKNF — Pattern Research (archived)
+
+> **Archived 2026-04-23.** Historical research compiled for the original KRKNF configuration. Retained for reference only — the bot's default symbol was switched to TSLA because Alpaca's paper-trading data feed does not carry KRKNF's OTC quotes. If a Canadian broker feed is ever wired up, this file can be the seed for reactivating KRKN / KRKNF. The active research file is now `pattern-research-tsla.md`.
 
 > **Initial analysis: April 2026**, compiled from public data. Refreshed weekly by `routines/weekly-review.md` which replaces these numbers with measured values from Alpaca bars.
 

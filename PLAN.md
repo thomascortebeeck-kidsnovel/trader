@@ -145,12 +145,15 @@ trader/
 
 ---
 
-## 4. Bot 2 — Day-Trading Bot for Kraken Robotics
+## 4. Bot 2 — Day-Trading Bot (codenamed "kraken")
 
-**The asset.** Kraken Robotics Inc. trades on TSX as `KRKN` and on US OTC as `KRKNF`. Alpaca paper supports OTC tickers but liquidity is thin and bar data may be delayed. We will:
-1. **Default to KRKNF** for paper trading on Alpaca.
-2. **Validate liquidity each pre-market**; if average 5-min volume < 5k shares we skip the day (logged, not traded).
-3. Keep the strategy document broker-agnostic so it ports to Questrade / IBKR for real money on TSX `KRKN`.
+> **2026-04-23 update.** Default symbol switched from `KRKNF` → **`TSLA`**. Alpaca's paper-trading data feed does not carry OTC quotes for KRKNF, so every poll returned 403 and every pre-market logged `plan=SKIP` for two days. `KRKN` on TSX remains the aspirational real-money target once a Canadian broker is wired. The repo path (`bots/day-trader-kraken/`), env-var prefix (`KRAKEN_*`), and codename stay "kraken" for repo continuity. See `bots/day-trader-kraken/pattern-research-krknf.md` (archived) and `pattern-research-tsla.md` (active, seeded empty).
+
+**The original asset (retired for paper).** Kraken Robotics Inc. trades on TSX as `KRKN` and on US OTC as `KRKNF`. Alpaca paper supports OTC tickers in principle but did not carry KRKNF in practice. Original plan below is kept for reference; the TSLA-based variant substitutes the symbol and bumps the liquidity floor from 5k to 200k shares.
+
+1. **Default to TSLA** for paper trading on Alpaca (was: KRKNF).
+2. **Validate liquidity each pre-market**; if average 5-min volume < 200k shares we skip the day (was: 5k). For TSLA this threshold is effectively always met.
+3. Keep the strategy document broker-agnostic so it ports to Questrade / IBKR for real money on TSX `KRKN` if the Canadian broker path is ever wired.
 
 **Why a single name?** Day trading rewards *deep* knowledge of one instrument's personality — its typical range, its float behaviour, who pushes it around. The bot becomes a specialist, not a generalist.
 
