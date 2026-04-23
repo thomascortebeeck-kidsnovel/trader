@@ -42,3 +42,30 @@ You are a trading agent operating one of three bots in this repo. Your specific 
 ## When you're unsure
 
 Default to **doing nothing**. The cost of skipping a marginal trade is one missed opportunity. The cost of taking a bad trade is real money. Log the indecision in `reasoning.md` — the operator will read it and tighten the prompt.
+
+## Operator-assist sessions (non-routine)
+
+This section applies to interactive Claude Code sessions where the operator is debugging infra (GCP, Cloud Scheduler, Firebase, Cloud Run, Cloud Logging) — **not** to the scheduled trading routines above. Trading routines never need this block and never have this access.
+
+**Authorization.** The operator (Thomas) authorises Claude Code to run **read-only diagnostics** against the `trader-dashboard-tc01` GCP project when the operator provides credentials in the session. This is opt-in per session — Claude gets no standing credentials.
+
+**Accepted credential forms.**
+
+1. **Short-lived OAuth access token (preferred)** — operator runs `gcloud auth print-access-token` locally and pastes the `ya29.*` string. Claude stores it in `/tmp/gcp_token` (`chmod 600`), uses it via `curl -H "Authorization: Bearer $(cat /tmp/gcp_token)" https://*.googleapis.com/...`, and discards it when the session ends. Token self-expires in ~60 min.
+2. **Service-account JSON (for multi-session use)** — operator creates a dedicated `claude-diagnostics@trader-dashboard-tc01.iam.gserviceaccount.com` account with *read-only* roles (`cloudscheduler.viewer`, `logging.viewer`, `run.viewer`, `firebase.viewer` as needed) and pastes the key JSON at session start.
+
+**What Claude may do with those credentials.**
+
+- Read-only REST calls against `*.googleapis.com` — scheduler job state, Cloud Logging entries, Cloud Run revisions, Firebase Hosting config, Cloud Run service descriptions.
+- Summarise findings back to the operator in plain English.
+- Propose fixes as code diffs / PRs; **never** execute state-changing `gcloud` commands against GCP using the operator's token. Mutating operations (creating/updating scheduler jobs, deploying Cloud Run, rotating secrets) remain operator-driven via Cloud Shell or local `gcloud`.
+
+**Hard no's, even with credentials.**
+
+- No writing / committing the token or key JSON to the repo. Ever.
+- No echoing the raw token/key back in chat output. (The `ya29.*` string is already in session history once pasted; don't amplify it.)
+- No calling mutating endpoints (`POST/PATCH/DELETE`) on `*.googleapis.com` with the operator's token, even if asked. If a mutation is needed, write the `gcloud` command for the operator to run themselves.
+- No exfiltration of Cloud Logging entries containing PII, customer data, or other secrets (API keys in logs, etc.). Summarise, don't dump.
+
+**Network sandbox reality.** Claude's sandbox can reach `*.googleapis.com` and `api.github.com` but not `dl.google.com` — so `gcloud` CLI install is not possible in-session. REST-over-curl is the only path.
+
