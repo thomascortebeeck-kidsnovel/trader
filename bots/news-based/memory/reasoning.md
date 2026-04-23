@@ -20,3 +20,10 @@ Bench (SPY): +0.75% — bot vs bench: -0.75%
 Trades today: 0 (0W 0L 0BE)
 Best: — Worst: —
 Notes: First session — no pre-market signals on file, no entries. Watchlist + macro-themes review needed before tomorrow's open.
+
+## 2026-04-23 12:30 news-event
+
+**Saw:** 1 layer-1 item — [MICRO] TSLA "TD Cowen Reiterates Buy on Tesla, Maintains $490 Price Target" (benzinga.com, ID 52007599). Hash not in `seen-headlines.md` → new item. Account equity $100,000 flat, day P/L +0.00% (no halt), 0 open positions, 0 trades today (5-cap unused).
+**Did:** Added the URL hash to `seen-headlines.md` and skipped the trade. No order placed, no ClickUp notification.
+**Why:** Fails layer-2 on two independent gates. (1) **Source tier:** benzinga.com is explicitly tier-2 per `skills/news-filter/SKILL.md:42`, and strategy.md requires tier-1. (2) **Importance:** this is a TD Cowen *reiteration* of an existing Buy with an *unchanged* $490 target — no rating delta, no target delta, no new information. The news-filter rubric reserves importance-4 for Goldman/MS/JPM upgrade-downgrades or large contracts; a tier-2 reiteration is importance-1 to 2 (repost/housekeeping). Either failure alone is sufficient to skip under `strategy.md` §Filtering.
+**Watch:** The layer-1 poller is letting benzinga.com through as a tier-1 domain — this is a filter leak. Every benzinga item will waste a layer-2 evaluation cycle. Flag for the weekly-review: either remove benzinga from the poller's tier-1 domain list, or promote it to a separate tier-2 pre-filter. Also note that TD Cowen reiterations on TSLA appear to be a recurring pattern on this source; if we see three more this week, consider a source+action blocklist rule (e.g., drop all "reiterates" items from tier-2 domains before layer-2).
