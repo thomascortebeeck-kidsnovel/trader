@@ -49,12 +49,14 @@ OR_WINDOW_END = dt.time(9, 55)
 
 # Volume-spike event thresholds. A bar fires a VOLUME_SPIKE event only when
 # BOTH conditions hold: last bar vol > MIN_SESSION_VOL AND last bar vol > RATIO
-# * session-avg. Calibrate MIN_SESSION_VOL to ~1/3 of the symbol's median
-# 5-min bar volume so genuinely quiet bars can't falsely trip a spike.
-#   KRKNF baseline — 5_000 (small-cap OTC, ~6-10k/bar typical)
-#   TSLA current   — 200_000 (mega-cap NASDAQ, ~850k/bar median = 80M / 78 bars)
-# Re-tune here when swapping symbols; the ratio 1.5× is liquidity-agnostic.
-MIN_SESSION_VOL = 200_000
+# * session-avg. Calibration note: the `iex` feed used below reports only
+# IEX-exchange trades (~2-3% of total US tape). TSLA's total 5-min bar is
+# ~850k shares but the IEX slice is ~5-15k typical. MIN_SESSION_VOL is the
+# IEX-slice floor, NOT the total-volume floor.
+#   TSLA (IEX feed) — 5_000   (seen: ~5-15k typical, ~2-3k at lunch)
+#   KRKNF (OTC)     — 5_000   (small-cap baseline, similar scale)
+# If we ever switch `feed` to `sip` (paid subscription), bump this up 50-100x.
+MIN_SESSION_VOL = 5_000
 VOL_SPIKE_RATIO = 1.5
 VWAP_COOLDOWN_MIN = 30
 VOL_COOLDOWN_MIN = 15
@@ -283,6 +285,18 @@ def main() -> int:
 
     state["session_bars"] = bars
 
+    # Snapshot the event-fire state BEFORE detection mutates it. If the POST
+    # to the routine trigger fails, we revert these fields so the next poll
+    # can retry the same event. Without this, a transient API failure locked
+    # out OR_COMPLETE for the whole day (seen 2026-04-23).
+    pre_event_flags = {
+        "or_fired": state.get("or_fired", False),
+        "vwap_cooldown_until": state.get("vwap_cooldown_until"),
+        "vol_cooldown_until": state.get("vol_cooldown_until"),
+        "position_1r_fired": state.get("position_1r_fired", False),
+        "position_1_5r_fired": state.get("position_1_5r_fired", False),
+    }
+
     current_vwap = vwap(bars)
     last_bar = bars[-1]
     last_close = last_bar["c"]
@@ -419,6 +433,11 @@ def main() -> int:
         print(f"Firing routine for {len(events)} event(s)...")
         success = _post_trigger(trigger_url, trigger_token, full_text)
         if not success:
+            # Revert event-fire flags so the next poll can retry. Keep the
+            # bar-tracking fields (session_bars, last_close, last_above_vwap)
+            # since those reflect observed reality, not a fired-event claim.
+            for k, v in pre_event_flags.items():
+                state[k] = v
             save_state(state_file, state)
             return 1
 
