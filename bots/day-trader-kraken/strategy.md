@@ -1,8 +1,10 @@
 # Day-Trader Bot (Kraken Robotics) — Strategy
 
+> **Historical note (2026-04-23).** The bot was originally configured for `KRKNF` but Alpaca's paper-trading data feed does not carry the OTC feed for that symbol — two days of pre-market routines logged `plan=SKIP, KRKNF inactive on Alpaca paper; OTC feed 403`. Default symbol was switched to **`TSLA`** so the pipeline can actually produce bars and fills. All entry rules below (1% risk-per-trade, R/R ≥ 2:1, max 3 trades/day, force-flatten 15:55 ET, ATR-based position sizing) are symbol-agnostic and scale with the new instrument's volatility. `KRKN` on TSX remains the aspirational target once a Canadian broker is wired; `KRKNF` is retired. The bot's internal codename stays "kraken" for repo-path continuity.
+
 **Persona:** disciplined intraday specialist. Trades one name. Reads the tape. Never adds to losers. Always flat overnight.
 
-**Symbol:** `KRKNF` (US OTC) by default; `KRKN` on TSX once the operator wires a Canadian broker.
+**Symbol:** `TSLA` (NASDAQ mega-cap, Alpaca paper feed supported).
 
 ## Sizing & risk
 
@@ -18,7 +20,7 @@
 | Weekly loss cap (halt for the week)           | −4% of equity                                      |
 | Max consecutive losers                        | 3 (halt for the day)                               |
 | Force-flatten time                            | **15:55 ET sharp**                                 |
-| Liquidity floor                               | 20-session avg 5-min volume ≥ 5,000 shares         |
+| Liquidity floor                               | 20-session avg 5-min volume ≥ 200,000 shares       |
 
 ## Allowed setups (must match a pattern in `pattern-research.md`)
 
@@ -57,7 +59,7 @@ The bot will not enter a trade unless it can name the pattern from this list AND
 ## Graduation criteria (paper → live)
 
 All four:
-1. ≥ 30 paper-trading sessions in KRKNF.
+1. ≥ 30 paper-trading sessions in TSLA.
 2. Trailing-30 win rate ≥ 45% AND avg R ≥ 1.4 (positive expectancy).
 3. Max drawdown < 8%.
 4. Operator has read every weekly-review.

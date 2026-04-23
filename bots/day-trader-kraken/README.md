@@ -1,22 +1,24 @@
-# Bot 2 — Day Trader, Kraken Robotics
+# Bot 2 — Day Trader
 
-Single-name intraday bot. Trades **Kraken Robotics Inc.** — `KRKN` on TSX, `KRKNF` on US OTC. Default symbol on Alpaca paper is `KRKNF`.
+> **2026-04-23: default symbol switched to `TSLA`.** The bot was originally configured for Kraken Robotics (`KRKNF` US OTC / `KRKN` TSX) but Alpaca's paper-trading data feed does not carry KRKNF's OTC quotes — every poll returned 403 and every pre-market logged `plan=SKIP`. TSLA is a NASDAQ mega-cap with full Alpaca paper support, so the pipeline can actually produce bars and fills. The folder name and codename stay `kraken` for repo-path continuity. Archived KRKNF research lives in [`pattern-research-krknf.md`](./pattern-research-krknf.md).
+
+Single-name intraday bot. Current default on Alpaca paper: `TSLA`.
 
 - Risk per trade: **1% of equity** (Aziz convention).
 - R/R minimum: **2:1**.
 - Max **3 trades / day**, max **3 consecutive losers** then halt.
 - **Always flat by 3:55 PM ET** — no overnight risk.
-- All entries must match a documented pattern in [`pattern-research.md`](./pattern-research.md).
+- All entries must match a documented pattern in [`pattern-research-tsla.md`](./pattern-research-tsla.md).
 
 ## Why a single name
 
-Day trading rewards depth over breadth. The bot becomes a specialist on KRKNF's typical range, opening behavior, news cadence, and float dynamics.
+Day trading rewards depth over breadth. The bot becomes a specialist on TSLA's typical range, opening behavior, news cadence, and float dynamics.
 
 ## A note on liquidity
 
-KRKNF is a US OTC listing of a Canadian small-cap. Spreads are wider and bar data through Alpaca's IEX feed may be delayed or sparse during low-volume periods. The pre-market routine **gates the day** — if average 5-min volume over the trailing 20 sessions < 5,000 shares, the bot stands down for the day.
+TSLA is a NASDAQ mega-cap with ~67-80M average daily volume — plenty of liquidity on Alpaca's IEX feed during market hours. The pre-market routine still **gates the day** — if average 5-min volume over the trailing 20 sessions < 200,000 shares, the bot stands down for the day (that threshold should never trip for TSLA under normal conditions; it only fires if Alpaca's feed is degraded).
 
-For real money, the operator should evaluate Questrade or IBKR to trade `KRKN` on TSX directly. Strategy is broker-agnostic.
+For real money, the operator should evaluate a broker that can route to NASDAQ with tight spreads (Alpaca live / IBKR / Tastytrade). Strategy is broker-agnostic. If a Canadian broker is ever wired for `KRKN` on TSX, the archived research in `pattern-research-krknf.md` is the starting point.
 
 ## Routines
 

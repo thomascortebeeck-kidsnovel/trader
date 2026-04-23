@@ -1,5 +1,7 @@
 # Day-Trading Research Notes — Sources for Bot 2
 
+> **2026-04-23: symbol change.** The day trader's default traded symbol was switched from `KRKNF` to `TSLA`. This research note is *symbol-agnostic* — Aziz's pattern catalog (ORB, VWAP reclaim, ABCD, flags), the 1% risk-per-trade rule, the 2:1 R/R floor, and the lunch-lull + final-hour rules all apply identically to TSLA. Only the KRKNF-specific liquidity priors in the pattern-research file have been archived to `bots/day-trader-kraken/pattern-research-krknf.md`; the new symbol's empirical baseline is built weekly by the weekly-review routine into `pattern-research-tsla.md`.
+
 This file documents *why* the day-trader bot's strategy is what it is. It points to the books and research the rules are distilled from. Read this before changing `bots/day-trader-kraken/strategy.md`.
 
 ## Key sources

@@ -47,7 +47,14 @@ MARKET_CLOSE = dt.time(16, 0)
 OR_END = dt.time(9, 45)
 OR_WINDOW_END = dt.time(9, 55)
 
-MIN_SESSION_VOL = 5_000
+# Volume-spike event thresholds. A bar fires a VOLUME_SPIKE event only when
+# BOTH conditions hold: last bar vol > MIN_SESSION_VOL AND last bar vol > RATIO
+# * session-avg. Calibrate MIN_SESSION_VOL to ~1/3 of the symbol's median
+# 5-min bar volume so genuinely quiet bars can't falsely trip a spike.
+#   KRKNF baseline — 5_000 (small-cap OTC, ~6-10k/bar typical)
+#   TSLA current   — 200_000 (mega-cap NASDAQ, ~850k/bar median = 80M / 78 bars)
+# Re-tune here when swapping symbols; the ratio 1.5× is liquidity-agnostic.
+MIN_SESSION_VOL = 200_000
 VOL_SPIKE_RATIO = 1.5
 VWAP_COOLDOWN_MIN = 30
 VOL_COOLDOWN_MIN = 15

@@ -50,6 +50,7 @@ jobs:
 
       - name: Run intraday poller
         env:
+          SYMBOL: TSLA
           KRAKEN_ALPACA_API_KEY: ${{ secrets.KRAKEN_ALPACA_API_KEY }}
           KRAKEN_ALPACA_SECRET_KEY: ${{ secrets.KRAKEN_ALPACA_SECRET_KEY }}
           KRAKEN_ROUTINE_TRIGGER_URL: ${{ secrets.KRAKEN_ROUTINE_TRIGGER_URL }}
