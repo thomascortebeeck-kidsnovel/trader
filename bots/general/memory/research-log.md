@@ -111,3 +111,59 @@ _Still none from the pre-market pass._ Reason: the same four gates apply (cataly
 - **Earnings-day names reporting today** — standard rule #2. No specific watchlist names are on today's reporter list (UNH / GE / MMM / ALK printed yesterday), but verify before any late-in-day entry.
 
 **Next routine (market-open) should:** (1) re-pull `alpaca account` and `positions` to confirm the book is still flat; (2) snapshot QQQ, AMZN, SPY pre-market prints and 09:30 ET opens + first 5-min bars, check rule #3 (≤3% band) and rule #4 (above 50-day SMA) on each; (3) avoid all entries in the 10:15–10:45 ET window around the EIA crude print given live Iran-tape reactivity; (4) prefer QQQ first half-size (~2.5% equity) if it qualifies, then AMZN half-size as the second position only if it independently qualifies, capped at 2 new positions today per the cold-start rule; (5) set 10% trailing stops on any fill via Alpaca and log every fill to trade-log.md; (6) if the Iran / Hormuz headline cycle escalates further pre-open, defer entries another session — the "when unsure, do nothing" tie-breaker beats anchoring day-one on a geopolitical gap.
+
+## 2026-04-23 pre-market
+
+**Account state:** equity $100,010.49 / cash $95,745.96 / long_mv $4,264.53 / trading_blocked=false / balance_asof 2026-04-22. Last-equity $100,009.53 → day_pl +$0.96 (+0.001%, non-event). Positions: QQQ 3 @ avg $654.27 → current $654.26 (unrealized −$0.03, ~flat); AMZN 9 @ avg $254.58 → current $255.75 (unrealized +$10.52, +0.46%). Trailing stops live on both: QQQ GTC trail 10% HWM $655.33 → stop $589.80 (up from yesterday's $588.73 fill-time read); AMZN GTC trail 10% HWM $255.93 → stop $230.34 (up from yesterday's $229.10). Weekly P/L +0.01% vs start-of-week $100k, far above the −1.5% weekly-review tripwire. **Weekly cap: 2 of 2 new positions used this week** per the 04-20 weekly-review's cold-start override — no further WATCH → BUY conversions permitted until the 04-24 weekly-review writes the next block.
+
+**Macro / calendar (all ET):**
+- **`scripts/finnhub.py economic` returned HTTP 503 across all endpoints (general, company-news, earnings, calendar) — Finnhub is down for this session.** Fell back to one Perplexity query scoped to today's US macro calendar.
+- Perplexity result: **no FOMC / CPI / NFP / PCE / GDP / PMI / Fed-speaker** scheduled for 2026-04-23. Only notable print is the already-released 08:30 ET Initial Jobless Claims (actual 214K vs 211K est, +3K miss — non-event) plus a low-impact 10:00 ET Preliminary US Steel Imports for Consumption. Rule against trading the 30-min window around FOMC/CPI/NFP does not apply today.
+- No repeat-headline avoidance window from a prior-day hearing either (Warsh wrapped 04-21, no return slot).
+
+**Tape context:**
+- **Iran / Hormuz headline cycle is escalating, not de-escalating.** Overnight 2026-04-22: US military intercepted at least three Iranian oil tankers in Asian waters (Reuters); US Senate voted on motion to remove US forces from Iran hostilities (not congressionally authorized); WaPo — "clearing Strait of Hormuz of mines could take 6 months, Pentagon tells Congress." This morning: Benzinga front-running "Iran peace efforts stall" framing; S&P / Dow futures trading lower pre-open vs yesterday's Nasdaq-100 record-close. Yesterday's ceasefire-extension tailwind has flipped to a ceasefire-stalling overhang. Crude remains in the high-$80s / low-$90s per public feeds (no $95+ break observed) — tripwire not tripped but the distribution has widened.
+- **Chip / AI-infra tape still constructive-to-hot.** ARM at all-time high yesterday; Marvell announced Polariton photonics acquisition (AMZN, GOOGL, NVDA, MRVL, SOXX tagged) extending the AI-infra supply chain; TSM publicly said it sees no immediate need for ASML's priciest gear — minor fade signal on leading-edge litho capex timing, but the AI-infra demand pulse itself is not flagged as peaking. SOXX +27% MTD "chase warning" framing from prior days stands.
+- **SPY / QQQ sentiment still net bullish.** $10B combined inflows into SPY/IVV/VOO yesterday (Benzinga); Ryan Detrick (Carson) "stays bullish while others are fearful" note; Nasdaq 100 closed at records yesterday. This is the sentiment-froth signal that rule #3's no-chase discipline exists to counterbalance. Trump approval rating remains underwater despite market highs — political-tail feeds the tariff-coercion risk without adding a new today-catalyst.
+- **AMZN layered catalysts intact.** Today: Amazon India announced ~$300M (₹2,800 Cr) investment into associate safety/health and warehouse operations expansion — modest positive, not thesis-moving. Amazon tagged in yesterday's Marvell/Polariton photonics coverage (AWS infra implication). Consumer-discretionary whale-activity block from yesterday's session included AMZN. Earnings still confirmed 2026-04-30 — rule #2 blackout starts 04-29, making 04-28 close the last clean-hold day under current weekly-review.
+- **Holding P/L today (pre-open):** QQQ essentially flat ($654.26 vs $654.27 entry), AMZN +0.46% ($255.75 vs $254.58 entry). Trailing stops tracked ~$1 higher on both, so effective risk has already ratcheted down by ~$1 × qty on each name.
+
+### BUY_CANDIDATES
+
+_None._ The active weekly-review block (Week of 2026-04-20, valid through 2026-04-24) caps cold-start adds at **2 new positions per week** and both slots are already filled (QQQ + AMZN, 2026-04-22). No other WATCH names were permitted by the operator's signed-off block. Per CLAUDE.md "write before you exit" and the weekly-review's "no intraday rule-stretching" clause, I will not synthesize a third BUY slot from a constructive chip-tape or a stalling-Iran-peace narrative — the next legitimate expansion window is the 04-24 Friday weekly-review.
+
+### WATCH
+
+- **QQQ (held)** — no new concerns. 13-day surge framing intact, AI-infra supply chain stretching (Marvell/Polariton, ARM ATH). Trailing-stop at $589.80 carries the risk; thesis unbroken. Not a buy candidate today because book-level cap is full; hold with stop.
+- **AMZN (held)** — no new concerns. Anthropic-Mythos / AWS-Anthropic / One Medical GLP-1 / GitLab-Bedrock / Amazon India $300M capex stack layered; IV should compress into the 04-30 print only modestly given the run-in already absorbed. Trailing-stop at $230.34 carries the risk; thesis unbroken. Rule #2 will force an exit decision by 04-28 close; Friday's weekly-review must explicitly grant any hold-through-earnings exception.
+- **SPY** — broad-market alternative; off-limits this week under the cap. Noted for continuity.
+- **NVDA / AVGO / TSM / SMH / SOXX** — AI-infra WATCH-only per the 04-20 weekly-review. SOXX +27% MTD + today's Marvell/Polariton + ARM ATH + TSM "no immediate need for high-end ASML gear" suggest the tape is still running but with the first visible fade-tell (TSM capex timing). No change in status: WATCH-only, no entries.
+- **XRT** — carried from prior pre-market blocks; lower-conviction discretionary-breadth expression; off-limits this week under the cap.
+- **Energy (XLE, XOM, COP, CVX)** — soft WATCH unchanged. The 04-22 Hormuz tanker-intercept is the exact kind of headline that would tempt a hedge-buy, but strategy tilts quality not tactical-rotation and the cap is full. Noted only so future weekly-reviews can explicitly consider whether to formalize a geopolitical-hedge slot.
+
+### AVOID
+
+- **AAPL** — unresolved governance (Cook → Ternus, Srouji) + tariff-refund political overhang unchanged. No fundamental catalyst; pass.
+- **USO / oil-pure-play derivatives** — directional geopolitical bet on Hormuz escalation; out of persona. Rule #1 (catalyst must be fundamental) rules these out.
+- **Leveraged ETFs (TQQQ / SQQQ / SOXL / any 2x/3x)** — out of universe by strategy. Reiterated because the sentiment froth + chip tape will tempt.
+- **Any new entry this week** — weekly cap binding, not a name-specific AVOID but a portfolio-level one. Next re-arming window is the 04-24 weekly-review.
+- **Earnings-day names** — standard rule #2. AMZN enters its own blackout window 04-29; no other held/watched names in this week's reporter block per prior routines. Verify on Monday 04-27 pre-market.
+
+**Tripwires check (pre-open, for midday/market-open's carry):**
+- Crude gap past $95: **not tripped** — last public reads high-$80s to low-$90s; Hormuz escalation is real but oil hasn't spiked past the tripwire.
+- Live US Fed speaker in a 30-min entry window: **not applicable** — no Fed speakers today.
+- QQQ or AMZN > 3% above pre-market open: **not applicable** — rule #3 gates adds, which are capped anyway; for hold-disciplined reads, both names are <1% away from yesterday's fill level.
+- Alpaca trading_blocked / account_blocked: **false / false**.
+- Weekly P/L ≤ −1.5%: **no** — weekly P/L +0.01%, miles above tripwire.
+
+**Next routine (market-open) should:** (1) re-pull account + positions to confirm QQQ 3 and AMZN 9 are still the only positions and the trailing stops are still open (GTC, status=new); (2) **place no new orders** — weekly cap is full, BUY_CANDIDATES is None; (3) verify neither holding has gapped through its stop by snapshotting QQQ (stop $589.80) and AMZN (stop $230.34); (4) if Iran / Hormuz escalates further intraday (crude gaps $95 OR a US-Iran kinetic headline), do nothing — trailing stops are already carrying the risk and the weekly-review doesn't permit defensive trim without a midday-rule trigger; (5) journal and commit per routine spec. **Midday** should defend the book: loss-cap halt at bot day_P/L −2% ($98,010.28 = equity × 0.98); cut losers at QQQ ≤ $608.67 (−7% from entry) or AMZN ≤ $236.76 (−7% from entry); tighten trailing stops on winners if QQQ ≥ $752.41 (+15%) or AMZN ≥ $292.77 (+15%).
+
+**Next weekly-review (2026-04-24) must decide:**
+- Does the QQQ + AMZN half-size seed earn positive alpha vs SPY for the week through today's close and tomorrow's?
+- Should AMZN be flattened 04-28 close per rule #2 earnings-day blackout, or does the layered-catalyst stack justify a weekly-review-granted hold-through-earnings exception?
+- Should the 04-27 week lift the cold-start cap from 2/week back to the strategy's 3/week max, or hold at 2 until the first meaningful trim-and-add cycle?
+- Reconcile the 2026-04-21 SPY 707.41 vs Alpaca prevDailyBar 703.91 drift (benchmark skill requires explicit rewrite flag, not silent patch).
+
+**Operational notes:**
+- **Finnhub outage is the #1 infra flag today.** All finnhub.py endpoints (general, company-news, earnings, calendar) returned HTTP 503 at 04-23 pre-market. Perplexity fallback was sufficient for the calendar step but if the outage persists into market-open it will also hit the news-poller / research-skill cheap pass. Operator should check Finnhub status and consider a secondary provider if the outage is multi-session.
+- **Benchmark drift (carried):** the 2026-04-21 SPY close recorded 707.41 vs Alpaca snapshot's prevDailyBar.c 703.91 remains unreconciled; today's SPY snapshot dailyBar.c = 711.20 matches yesterday's recorded 04-22 bench_close exactly, so the drift appears isolated to the 04-21 row. Weekly-review on 04-24 is the right place to fix it per benchmark skill's no-silent-rewrite rule.
