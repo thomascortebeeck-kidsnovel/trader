@@ -9,4 +9,6 @@ Append-only. One hash per processed news item. The `news-filter` skill dedupes a
 2026-04-24 13:45 | ded1b0d92d3e374d44c16a8adab5554061c5fc95ae76c1fb3056a4725d01f8e0 | TSLA
 2026-04-24 13:45 | 88198dc3cdeff76dd4655a952e640a1df02fda21d74bae3f3f444f601ccf5a7e | TSLA
 2026-04-24 14:50 | 36b94b742a75abb8cb4c9c626362c8be6751eb87e7a030f175f1d7eca71c5767 | NVDA
+2026-04-24 14:55 | a17d636f4a0b1dc1 | NVDA
+2026-04-24 14:55 | 3b1d0ed4a1beac4d | AMD,AMZN,GOOGL,META,MSFT
 
