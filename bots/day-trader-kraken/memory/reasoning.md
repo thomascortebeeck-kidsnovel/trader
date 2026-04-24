@@ -2,6 +2,20 @@
 
 Append-only.
 
+## 2026-04-24 11:49 ET day-trader-kraken intraday-event
+
+**Saw:** Routine fired but no event payload delivered — nothing in the prompt context naming event_type, price, volume, ORH/ORL, or milestone, and nothing in env vars or `/tmp/` that looks like an event file. Separately, `memory/pattern-cache.md` is still the blank template: Date, Pre-market gap, Catalyst, Plan, all five levels, ORH/ORL/OR-width/OR-avg-vol, and Live trade state all empty. Last reasoning.md entry is 2026-04-22 close-flatten; there are no 2026-04-23 or 2026-04-24 pre-market / close-flatten entries. Account probe: $100k equity, $100k cash, zero positions, zero daytrades, `balance_asof=2026-04-23`, `trading_blocked=false` — so no fills have occurred today either. Strategy symbol is now `TSLA` (switched from KRKNF on 2026-04-23 per the strategy.md historical note), but the pattern-cache was never repopulated after the reset at 2026-04-22 close-flatten.
+
+**Did:**
+- Verified env (paper endpoint, `LIVE_MODE=false`), read `strategy.md` and `memory/pattern-cache.md`, tailed `reasoning.md` and `trade-log.md`.
+- Called `alpaca.py account` and `alpaca.py positions` — confirmed flat and unblocked.
+- Did NOT pull bars, did NOT run risk-check, did NOT submit any orders. With no event payload I don't know which of ORB / VWAP-reclaim / volume-spike / position-milestone logic to apply, and with no pre-market plan or OR levels I cannot evaluate ORH/ORL or VWAP-reclaim context even if I guessed at an event.
+- Skipped ClickUp notify — strategy reserves it for entries / stop adjustments / exits, none of which happened.
+
+**Why:** Two independent blockers, either of which alone is sufficient to SKIP: (a) the routine's own step-5 branches all require event-specific fields (ORH, crossover side, spike bar, milestone R) that were not provided, so any trade would be guessing; (b) without a pre-market plan in `pattern-cache.md`, step 2's "if plan = SKIP → exit" is ambiguous, and the safer reading of "default to doing nothing when unsure" (CLAUDE.md) is to treat a blank cache as not-cleared-to-trade. Also we are ~11 min from the 12:00–13:00 ET lunch-lull no-trade window, which would shrink the remaining intraday window even if a setup appeared. Logging the structural gap is the useful output — the operator needs to see that the 04-23 pre-market (first day on TSLA) never populated the cache and the 04-24 pre-market either didn't fire or didn't write.
+
+**Watch:** Three asks for the operator, in priority order: (1) confirm the pre-market cron is actually wired for the TSLA-era bot and firing at ~08:15 ET on trading days — two consecutive days with no pre-market reasoning entry suggests the cron is stale or the job is failing silently post-symbol-switch; (2) confirm how the intraday poller is supposed to pass event payloads to this routine (env var? stdin? file path?) — today's invocation had none of them, and the routine prompt's "event details are in your initial context" is load-bearing; (3) if the poller did fire with a payload that got lost in transit, the 04-24 trade-log will show the miss. Also: given the symbol switch, the first real TSLA pre-market should probably verify liquidity floor (20-session avg 5-min vol ≥ 200k shares — TSLA easily passes but it should still be logged) and refresh `pattern-research-tsla.md` expectancy before the first live entry.
+
 ## 2026-04-22 close-flatten (supplemental re-run)
 
 **Saw:** Cron fired a second close-flatten invocation for 2026-04-22 (session branch `claude/gracious-maxwell-AzFmN`). Canonical run already committed at `13980aa` earlier today — journal entry, `benchmark.md` row, ClickUp report, and `pattern-cache.md` reset all in place. Re-probed live state: `orders open` → `[]`, `positions` → `[]`, `account` equity $100000.00 / last_equity $100000.00 (day P&L +0.00%, unchanged since the canonical run). `trade-log.md` still has 0 rows for 2026-04-22.
