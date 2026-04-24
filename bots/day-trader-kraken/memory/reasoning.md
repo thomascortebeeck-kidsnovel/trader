@@ -99,3 +99,29 @@ Catalyst scan ran anyway: Alpaca news for KRKNF is stale (latest item 2026-03-04
 **Why:** Strategy rule: the bot will not enter a trade unless it can name a pattern AND that pattern needs ATR/VWAP/OR levels that require bar data we cannot fetch today. Separately, even a hypothetical setup can't be expressed as an order because the asset is non-tradable on this broker. When either of those is true, SKIP is mechanical; with both true, the only useful output of pre-market is the journal itself, so the operator sees the blocker and doesn't wake the 09:45 / 12:30 / 15:55 routines expecting them to make something happen.
 
 **Watch:** If tomorrow's pre-market shows the same `inactive`/403 combo, consider recommending the operator pause the cron until the data/routing decision is made — running this routine against a dead symbol is ~3k tokens of pure overhead per day. Also: the pattern-research file's seed assumption that KRKNF liquidity is "adequate for our sizing" is true on the tape but irrelevant until Alpaca routes the symbol — update that caveat in the next weekly-review.
+
+## 2026-04-24 15:55 day-trader-kraken close-flatten
+
+**Saw:** Account clean — $100k equity, $100k cash, zero positions, zero open orders, `trading_blocked=false`. `trade-log.md` has only the header; no TSLA (or anything) trades logged for today. Pattern-cache was already in blank template state on entry (no pre-market routine populated a TSLA plan for today, consistent with 2026-04-21 EOD entry noting the pre-market cron may not have pivoted yet to TSLA). ITA benchmark: closed 215.58 vs prev-day 219.03 = −1.58% on the session (second red day for defense — ITA has now slid 219.03 → 215.58 from yesterday, and is down from 223.665 on 2026-04-21 — weak sector tape all week). SPY at 713.77 vs 708.41 = +0.76%, so broad market green while defense bled.
+
+**Did:**
+- `orders open` → `[]`. No TSLA orders to cancel.
+- `positions` → `[]`. No TSLA position to close. `close TSLA` not invoked.
+- `account` snapshot: equity $100000.00, last_equity $100000.00 → today P&L +0.00%, daytrade_count=0.
+- Ran benchmark skill against ITA: close 215.58, bench day P&L −1.58%, bot vs bench +1.58%. Appended row to `memory/benchmark.md`.
+- Sent [KRAKEN] EOD report to ClickUp via `scripts/notify.py`.
+- Wiped `memory/pattern-cache.md` back to the blank template (setup / OR / live-trade-state all empty).
+- Did not touch `pattern-research-tsla.md` or `pattern-research-krknf.md` — those belong to weekly-review.
+
+**Why:** Close-flatten's contract is guarantee-flat-overnight + leave clean state for tomorrow's pre-market. Already flat with no orders, so the real deliverables today are the EOD snapshot, benchmark row, ClickUp ping, pattern-cache reset, and this journal entry — each of which logs "zero action" honestly rather than assuming it. Worth flagging for the operator: the day-trader bot has now gone three consecutive sessions (2026-04-21, -22, -24 with the 23rd being a holiday/no-cron based on the benchmark.md gap) at exactly $100k equity and zero trades. The TSLA pivot noted in `strategy.md` on 2026-04-23 has not yet produced a populated pre-market pattern-cache — which is the gating input for the intraday routines.
+
+**Watch:** Tomorrow is Saturday; next session is Monday 2026-04-27 pre-market. Priority check: does the pre-market routine now pull TSLA bars (not KRKNF) and populate pattern-cache with levels + plan? If pattern-cache is blank again on Monday open, the operator needs to know the TSLA pivot hasn't landed in the pre-market routine prompt yet — at that point the 09:45 / 12:30 / 15:55 cron will keep firing for no gain. Also: ITA has now had two red sessions in a row while SPY rose — defense-specific weakness, worth noting in the next weekly-review pattern-research refresh.
+
+## Reported to ClickUp
+
+[KRAKEN] EOD 2026-04-24
+Equity: $100000.00 (today: +0.00%)
+Trades: 0 (0 winners, 0 losers)  Total R: 0R
+Best: none   Worst: none
+Plan today: SKIP (infra blockers persist on original symbol KRKNF; no TSLA setup cached)   Adhered: yes
+Notes: flat-day close; ITA -1.58% so bot +1.58% vs bench by standing aside. Pre-market did not populate pattern-cache for TSLA pivot.
