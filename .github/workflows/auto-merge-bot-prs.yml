@@ -11,13 +11,29 @@ permissions:
 
 jobs:
   auto-merge:
+    # Trust boundary: only auto-merge PRs on `claude/*` branches (routine
+    # session branches). Intentionally accepts drafts — the routine-executing
+    # agents often open PRs as draft out of caution, and the claude/* prefix
+    # is the real gate. Without this, every routine-produced PR got stuck
+    # open and main never received any bot commits (seen 2026-04-23 onwards).
     if: |
-      github.event.pull_request.draft == false &&
       startsWith(github.head_ref, 'claude/') &&
       github.head_ref != github.base_ref &&
       github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
+      - name: Mark PR ready-for-review if currently draft
+        # gh pr merge refuses to squash a draft PR. Flip to ready first;
+        # harmless if the PR is already non-draft.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "${{ github.event.pull_request.draft }}" = "true" ]; then
+            gh pr ready "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
+          fi
+
       - name: Collect changed paths before merge
         id: changes
         env:
