@@ -1,8 +1,22 @@
 # Trading Bot System — Master Plan
 
-A single Claude Code repository hosting **three distinct autonomous trading bots**, each implemented as a set of Claude Code routines + skills + memory files, all running against Alpaca's **paper-trading** account first.
+A single Claude Code repository hosting an autonomous trading bot — `bots/general/` — running against Alpaca's **paper-trading** account.
 
-> **Status:** Paper trading only. Real money is an explicit, deliberate toggle per-bot. No live trading until the operator flips `LIVE_MODE=true` in that bot's environment AND removes the paper-only guardrail in `CLAUDE.md`.
+> **Status:** Paper trading only. Real money is an explicit, deliberate toggle. No live trading until the operator flips `LIVE_MODE=true` in the bot's environment AND removes the paper-only guardrail in `CLAUDE.md`.
+
+> **Consolidation 2026-04-24.** This plan was originally drafted around three bots (general / day-trader-kraken / news-based). The latter two were archived to `bots/_archive/` after evaluating the literature and the operational reality of the 15-routine/day Anthropic quota.
+>
+> The case against retail day trading is overwhelming: 89-95% of retail day traders lose money within 1 year, less than 1% are consistently profitable over 5+ years (Berkeley/Davis Taiwan study), 87% quit within 3 years. Cambridge UK study (5,472 retail traders): day traders averaged **−3.8% annual after costs** vs swing traders at **+2.1%**. Sources: [QuantifiedStrategies](https://www.quantifiedstrategies.com/day-trading-statistics/), [Financial Analysts Journal — Profitability of Day Traders](https://www.tandfonline.com/doi/abs/10.2469/faj.v59.n6.2578).
+>
+> Retail news-driven trading is *worse*: Berkeley/Haas paper finds "stocks with high retail order imbalance and abnormal retail volume earn dismal returns" — i.e., retail news flow shows *negative* alpha. HFTs absorb the speed-sensitive information advantage in microseconds. Source: [Retail Trades Positively Predict Returns but Are Not Profitable](https://faculty.haas.berkeley.edu/odean/Papers%20current%20versions/resolving_a_paradox_retail_trades_positively_predict_returns_but_are_not_profitable.pdf).
+>
+> Swing/momentum is the only style with documented retail-accessible alpha. SPY intraday-momentum (Aziz/Zarattini/Barbon SSRN, 2007-2024): 19.6% annualized, Sharpe 1.33. AQR/Yale "Century of Evidence on Trend-Following" shows the anomaly persists across decades and asset classes.
+>
+> Quota math: just the four scheduled general-bot routines (pre-market, market-open, midday, eod) consume 4/15 daily routine runs — leaves 11 slots for Friday weekly-review and ad-hoc operator runs. The day-trader and news bots consumed an additional 5-15+ event-driven runs each on active days, blowing through the cap and starving the general bot.
+>
+> See `bots/_archive/README.md` for the per-bot postmortem and revival path.
+
+The original three-bot section (§3, §4, §5 below) is kept for context but only §3 (general bot) is the active spec.
 
 ---
 
